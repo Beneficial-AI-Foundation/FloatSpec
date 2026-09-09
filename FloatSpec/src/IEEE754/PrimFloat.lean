@@ -30,10 +30,10 @@ abbrev primEmax : Int := 1024
 -- exponent in an unsigned 63-bit word.
 abbrev shift : Int := 2 * primEmax + primPrec
 
-@[reducible] private def primPrecGt0Witness : Prec_gt_0 primPrec :=
+private theorem primPrecGt0Witness : Prec_gt_0 primPrec :=
   ⟨by norm_num [primPrec]⟩
 
-@[reducible] private def primPrecLtEmaxWitness : Prec_lt_emax primPrec primEmax :=
+private theorem primPrecLtEmaxWitness : Prec_lt_emax primPrec primEmax :=
   ⟨by norm_num [primPrec, primEmax]⟩
 
 -- These mirror Coq's `Local Instance Hprec` and `Local Instance Hmax`.
@@ -818,7 +818,8 @@ theorem SFdiv_valid (x y : StandardFloat)
           have haux := _root_.Bdiv_correct_aux
             (prec := primPrec) (emax := primEmax) RoundingMode.RNE
             sx px ex sy py ey
-          simpa [SFdiv, px, py, binaryPositiveOfNat_spec] using haux.1
+          simpa [SFdiv, px, py, binaryPositiveOfNat_spec,
+            binary_round_aux_equiv] using haux.1
 
 noncomputable def div (x y : PrimitiveFloat) : PrimitiveFloat :=
   ⟨SFdiv (Prim2SF x) (Prim2SF y),

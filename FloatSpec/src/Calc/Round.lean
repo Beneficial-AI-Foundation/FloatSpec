@@ -1071,8 +1071,9 @@ theorem inbetween_int_UP_sign (x : ℝ) (m : Int) (l : Location)
     have Hl' : inbetween_int m x l := by
       simpa [inbetween_int, abs_of_nonneg hx0] using Hl
     have hceil := inbetween_int_UP (x := x) (m := m) (l := l) Hl'
-    simpa [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_UP, round_UP', cond_incr]
-      using hceil
+    cases l <;>
+      simpa [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_UP, round_UP', cond_incr]
+        using hceil
 
 -- Zero Round (ZR)
 def round_ZR (s : Bool) (l : Location) : Bool :=
@@ -1470,7 +1471,8 @@ theorem inbetween_int_N (choice : Int → Bool) (x : ℝ) (m : Int) (l : Locatio
             simp only [hfl, hce] at hZ
             exact hZ
           -- Reduce RHS cond/round_N in the eq-location case and close
-          simp [round_N, cond_incr, hZ']
+          rw [hZ']
+          rfl
       | gt =>
           -- x > m + 1/2 ⇒ Znearest = m+1
           have hxgt_mid : ((m : ℝ) + ((m + 1 : Int) : ℝ)) / 2 < x := by
@@ -2382,10 +2384,10 @@ theorem truncate_correct_format
             (FloatSpec.Core.Defs.FlocqFloat.mk
               (FloatSpec.Core.Raux.Ztrunc sm) (cexp beta fexp x) :
               FloatSpec.Core.Defs.FlocqFloat beta) := by
-      simpa [FloatSpec.Core.Generic_fmt.generic_format, sm] using Hx
+      simpa [x, FloatSpec.Core.Generic_fmt.generic_format, sm] using Hx
     refine ⟨?_, ?_⟩
-    · simpa [truncate_aux, Hk, p, hp, q, hq, ← Hq_trunc, Hexp] using Hx_repr
-    · simpa [truncate_aux, Hk] using Hexp
+    · simpa [x, truncate_aux, Hk, p, hp, q, hq, ← Hq_trunc, Hexp] using Hx_repr
+    · simpa [x, truncate_aux, Hk] using Hexp
   · have Hk_nonneg : 0 ≤ k := by
       rw [hk]
       omega

@@ -1215,7 +1215,7 @@ private lemma tdiv_tmod_pow_eq
       tdiv_tmod_pow_eq_of_nonneg (-n) k l β hneg_nonneg hk0 hklt hβ
     simpa [Int.neg_tmod, Int.neg_tdiv] using congrArg Neg.neg hneg
 
-  theorem Zdigit_mod_pow (n k l : Int) (hβ : beta > 1 := h_beta):
+theorem Zdigit_mod_pow (n k l : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜k < l⌝⦄
     (pure (Zdigit beta (Int.tmod n (beta ^ l.natAbs)) k) : Id _)
     ⦃⇓result => ⌜result = Zdigit beta n k⌝⦄ := by
@@ -1625,8 +1625,9 @@ theorem Zsum_digit_digit_from_positive_payload
       -- Unfold the sum and rewrite using the inductive hypothesis.
       have ih' : Zsum_digit beta (fun i => Zdigit beta n i) k = n % beta ^ k := by
         simpa [wp, PostCond.noThrow, pure] using ih
+      have hsucc : ((k : Int) + 1).natAbs = k + 1 := by omega
       simpa [wp, PostCond.noThrow, pure, Zsum_digit, ih',
-        Int.natAbs_of_nonneg] using hmod.symm
+        Int.natAbs_of_nonneg, hsucc] using hmod.symm
 
 /-- Exact signed-remainder form of FLoCq `Zsum_digit_digit`. -/
 theorem Zsum_digit_digit (n : Int) (k : Nat) (hβ : beta > 1) :
@@ -5083,8 +5084,6 @@ private lemma digit_sum_bound (beta n k : Int) (h_beta : beta > 1)
 
   -- Now n ≠ 0, so we can use Zdigits_correct_from_nonzero_payload
   have h_digits := Zdigits_correct_from_nonzero_payload beta n h_beta hn
-  simp only [ PredTrans.pure] at h_digits
-
   -- Let d = Zdigits n
   set d := (Zdigits beta n) with hd_def
 
@@ -5125,7 +5124,6 @@ private lemma digit_sum_bound (beta n k : Int) (h_beta : beta > 1)
   -- So natAbs just gives the values themselves
   have d_pos : 0 < d := by
     have := Zdigits_gt_0 beta n h_beta hn
-    simp only [ PredTrans.pure] at this
     rw [hd_def]
     exact this
   have k1_pos : 0 < k + 1 := by linarith
@@ -5667,8 +5665,9 @@ theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
 
   · -- If x ≠ 0, use Zdigits_correct_from_nonzero_payload
     have h_correct := Zdigits_correct_from_nonzero_payload beta x hβ hx
-    simp only [ PredTrans.pure] at h_correct ⊢
     obtain ⟨h_lower, h_upper⟩ := h_correct
+    change beta ^ ((Zdigits beta x - 1).natAbs) ≤ |x| at h_lower
+    change |x| < beta ^ (Zdigits beta x).natAbs at h_upper
     intro hde
 
     -- From Zdigits_correct_from_nonzero_payload: |x| < beta ^ d.natAbs
@@ -5681,7 +5680,6 @@ theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
       -- Since d ≤ e and both are integers, d.natAbs ≤ e.natAbs
       have d_nonneg : 0 ≤ (Zdigits beta x) := by
         have := Zdigits_nonneg beta x trivial
-        simp only [ PredTrans.pure] at this
         exact this
 
       have h_natAbs_le : ((Zdigits beta x)).natAbs ≤ e.natAbs := by
@@ -5703,8 +5701,7 @@ theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
 
       -- First let's clarify types
       have h_x_bound : ↑(Int.natAbs x) < beta ^ ((Zdigits beta x)).natAbs := by
-        convert h_upper using 2
-        simp only [Int.natCast_natAbs]
+        simpa only [Int.abs_eq_natAbs] using h_upper
 
       -- Use transitivity: |x| < beta^d.natAbs ≤ beta^e.natAbs
       have h_pow_mono : beta ^ ((Zdigits beta x)).natAbs ≤ beta ^ e.natAbs :=
@@ -5719,7 +5716,6 @@ theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
       exfalso
       have d_nonneg : 0 ≤ (Zdigits beta x) := by
         have := Zdigits_nonneg beta x trivial
-        simp only [ PredTrans.pure] at this
         exact this
       -- hde says Zdigits beta x ≤ e
       -- Combined with e < 0 and d_nonneg : 0 ≤ Zdigits beta x, we have a contradiction
@@ -5750,7 +5746,6 @@ theorem Zdigits_gt_Zpower_from_natAbs_payload (e x : Int)
   intro h_precond
   -- Use Zpower_gt_Zdigits to derive a contradiction if d ≤ e
   have h_zpower := @Zpower_gt_Zdigits beta h_beta e x hβ
-  simp only [ PredTrans.pure] at h_zpower ⊢
   have h_spec := h_zpower trivial
 
   -- By contradiction: assume ¬(e < d), i.e., d ≤ e
@@ -5803,6 +5798,7 @@ theorem Zdigits_gt_Zpower (e x : Int)
     have heAbs : e.natAbs = e.toNat := by omega
     have h' : beta ^ e.toNat ≤ |x| := by
       simpa only [FloatSpec.Core.Zaux.Zpower, if_pos he] using h
+    change beta ^ e.natAbs ≤ Int.natAbs x
     simpa only [heAbs, Int.abs_eq_natAbs] using h'
   · have hd := Zdigits_ge_0 (beta := beta) x True.intro
     have hd0 : 0 ≤ Zdigits beta x := by

@@ -331,7 +331,6 @@ theorem generic_format_FLX (beta : Int) [ValidRadix beta] (x : ℝ) :
     · have habs : 1 ≤ |f.Fnum| := Int.add_one_le_iff.mpr (abs_pos.mpr hm)
       have : |f.Fnum| < 1 := by simpa [FloatSpec.Core.Zaux.Zpower] using hbound
       omega
-  letI : Fact (0 < prec) := ⟨hprec⟩
   have hmagm := FloatSpec.Core.Raux.mag_le_Zpower beta f.Fnum prec
     ValidRadix.valid hm hbound
   have hmag : mag beta (F2R f) = mag beta (f.Fnum : ℝ) + f.Fexp :=
@@ -499,7 +498,7 @@ theorem FIX_format_FLX (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
     (pure (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
-  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  simp only [wp, PredTrans.apply, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   rcases hpre with ⟨hlow, _hupp, f, hxf, hm⟩
   have hprec : 0 ≤ prec := by
     by_contra hp

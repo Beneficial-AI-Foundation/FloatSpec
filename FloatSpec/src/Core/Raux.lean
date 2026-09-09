@@ -2812,9 +2812,9 @@ theorem Zfloor_div_pos_payload (x y : Int) :
   have hr_ltZ : x % y < y := Int.emod_lt_of_pos _ hy_pos
   -- Cast to ℝ
   have hr_nonneg : (0 : ℝ) ≤ ((x % y : Int) : ℝ) := by
-    simpa using (Int.cast_mono hr_nonnegZ)
+    exact_mod_cast hr_nonnegZ
   have hr_lt : ((x % y : Int) : ℝ) < (y : ℝ) := by
-    simpa using (Int.cast_strictMono hr_ltZ)
+    exact_mod_cast hr_ltZ
   -- Real identity: (x : ℝ) = (y : ℝ) * (x / y) + (x % y)
   have hx_decomp : (y : ℝ) * ((x / y : Int) : ℝ) + ((x % y : Int) : ℝ) = (x : ℝ) := by
     simpa [Int.cast_add, Int.cast_mul] using
@@ -2838,7 +2838,6 @@ theorem Zfloor_div_pos_payload (x y : Int) :
     have hx_lt : (x : ℝ) < (((x / y : Int) : ℝ) + 1) * (y : ℝ) := by
       -- rewrite x in terms of q and r, then compare r < y
       have h := add_lt_add_left hr_lt ((y : ℝ) * ((x / y : Int) : ℝ))
-      simp only at h
       -- rearrange (y*q + y) = ((q + 1) * y)
       linarith [h]
     -- Transport the inequality through division by positive y
@@ -2883,8 +2882,8 @@ theorem Ztrunc_div_nonneg_pos_payload (x y : Int) :
   -- Show: ⌊(x:ℝ)/(y:ℝ)⌋ = x / y using the floor characterization at positive y
   have hr_nonnegZ : (0 : Int) ≤ x % y := Int.emod_nonneg _ (ne_of_gt hy_pos)
   have hr_ltZ : x % y < y := Int.emod_lt_of_pos _ hy_pos
-  have hr_nonneg : (0 : ℝ) ≤ ((x % y : Int) : ℝ) := by simpa using (Int.cast_mono hr_nonnegZ)
-  have hr_lt : ((x % y : Int) : ℝ) < (y : ℝ) := by simpa using (Int.cast_strictMono hr_ltZ)
+  have hr_nonneg : (0 : ℝ) ≤ ((x % y : Int) : ℝ) := by exact_mod_cast hr_nonnegZ
+  have hr_lt : ((x % y : Int) : ℝ) < (y : ℝ) := by exact_mod_cast hr_ltZ
   have hx_decomp : (y : ℝ) * ((x / y : Int) : ℝ) + ((x % y : Int) : ℝ) = (x : ℝ) := by
     simpa [Int.cast_add, Int.cast_mul] using congrArg (fun t : Int => (t : ℝ)) (Int.mul_ediv_add_emod x y)
   have h_lower : ((x / y : Int) : ℝ) ≤ (x : ℝ) / (y : ℝ) := by
@@ -2897,7 +2896,6 @@ theorem Ztrunc_div_nonneg_pos_payload (x y : Int) :
   have h_upper : (x : ℝ) / (y : ℝ) < ((x / y : Int) : ℝ) + 1 := by
     have hx_lt : (x : ℝ) < (((x / y : Int) : ℝ) + 1) * (y : ℝ) := by
       have h := add_lt_add_left hr_lt ((y : ℝ) * ((x / y : Int) : ℝ))
-      simp only at h
       linarith [h]
     exact (div_lt_iff₀ hyR_pos).mpr hx_lt
   have hf : ⌊(x : ℝ) / (y : ℝ)⌋ = x / y := by
@@ -3090,7 +3088,9 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
         rw [hcodeR, if_neg hx']
       rw [hL1, hR1]
   -- Finish by reducing the wp-goal to this equality.
-  simpa [wp, PostCond.noThrow] using this
+  change Rcompare ((Int.floor x : Int) : ℝ) x =
+    Rcompare x ((Int.ceil x : Int) : ℝ)
+  exact this
 
 /-- Coq theorem {coq}`Rcompare_ceil_floor_middle`: in the non-integral case,
     comparing the distance from {lean}`x` to its ceiling with {lean}`1 / 2`
@@ -3217,7 +3217,9 @@ theorem Rcompare_ceil_floor_middle_spec (x : ℝ) :
         simp [Rcompare, hnotltR, hfxne]
       rw [hL1, hR1]
   -- Finish by reducing the wp-goal to this equality.
-  simpa [wp, PostCond.noThrow] using this
+  change Rcompare ((Int.ceil x : Int) : ℝ) x =
+    Rcompare x ((Int.floor x : Int) : ℝ)
+  exact this
 
 end CompareIntBounds
 
@@ -4454,10 +4456,10 @@ noncomputable def mag_with_spec (r : FloatSpec.Core.Zaux.Radix)
       have hradix := r.prop
       have hbeta : 1 < r.val := by omega
       constructor
-      · simpa [abs_val] using
+      · simpa [abs_val, bpow] using
           (mag_lower_bound r.val x hbeta hx)
             True.intro
-      · simpa [abs_val] using
+      · simpa [abs_val, bpow] using
           (mag_upper_bound r.val x hbeta hx)
             True.intro }
 

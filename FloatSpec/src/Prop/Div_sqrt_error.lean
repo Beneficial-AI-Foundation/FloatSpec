@@ -8,6 +8,8 @@ import FloatSpec.src.Prop.Mult_error
 import FloatSpec.src.Prop.Plus_error
 import Mathlib.Data.Real.Basic
 
+set_option linter.style.haveILetI false
+
 -- Remainder of the division and square root are in the FLX format
 -- Translated from Coq file: flocq/src/Prop/Div_sqrt_error.v
 
@@ -144,9 +146,11 @@ theorem div_error_FLX (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd 
       (rnd (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp z))
       (FloatSpec.Core.Generic_fmt.cexp beta fexp z)
   have hx_fx : x = _root_.F2R fx := by
-    simpa [fx, generic_format, fexp] using hx
+    change x = _root_.F2R fx at hx
+    exact hx
   have hy_fy : y = _root_.F2R fy := by
-    simpa [fy, generic_format, fexp] using hy
+    change y = _root_.F2R fy at hy
+    exact hy
   have hr_fr : r = _root_.F2R fr := by
     simp [r, fr, FloatSpec.Core.Generic_fmt.roundR, _root_.F2R,
       FloatSpec.Core.Defs.F2R]
@@ -388,14 +392,16 @@ theorem sqrt_error_FLX_N (h_gt1 : 1 < prec) (x : ℝ)
             (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r))
           (FloatSpec.Core.Generic_fmt.cexp beta fexp r)
       have hx_fx : x = _root_.F2R fx := by
-        simpa [fx, generic_format, fexp] using hx
+        change x = _root_.F2R fx at hx
+        exact hx
       have hr_fmt : generic_format beta fexp r :=
         FloatSpec.Core.Generic_fmt.generic_format_roundR
           (beta := beta) (fexp := fexp)
           (rnd := FloatSpec.Core.Generic_fmt.Znearest choice)
           (x := Real.sqrt x) hβ
       have hr_fr : r = _root_.F2R fr := by
-        simpa [fr, generic_format, fexp] using hr_fmt
+        change r = _root_.F2R fr at hr_fmt
+        exact hr_fmt
       have hsqrt_ne : Real.sqrt x ≠ 0 := by
         exact ne_of_gt (Real.sqrt_pos.2 hxpos)
       have hpow_le_quarter :
@@ -687,8 +693,14 @@ theorem sqrt_error_FLX_N (h_gt1 : 1 < prec) (x : ℝ)
           hβ x (-(r * r)) fx
           (FloatSpec.Calc.Operations.Fopp beta (FloatSpec.Calc.Operations.Fmult beta fr fr))
           hx_fx hsecond
-          (by simpa [pow_two, sub_eq_add_neg] using hfirst)
-          (by simpa [pow_two, sub_eq_add_neg] using hsecond_bound)
+          (by
+            change |x + -(r * r)| < (beta : ℝ) ^ (prec + fx.Fexp)
+            simpa [pow_two, sub_eq_add_neg] using hfirst)
+          (by
+            change |x + -(r * r)| < (beta : ℝ) ^
+              (prec + (FloatSpec.Calc.Operations.Fopp beta
+                (FloatSpec.Calc.Operations.Fmult beta fr fr)).Fexp)
+            simpa [pow_two, sub_eq_add_neg] using hsecond_bound)
       have htarget :
           x + -(r * r) =
             x - (FloatSpec.Core.Generic_fmt.roundR beta (FLX_exp prec)

@@ -98,9 +98,11 @@ lemma mult_error_FLX_aux (x y : ℝ)
     intro hy0
     exact hz0 (by simp [z, hy0])
   have hx_repr : x = (mx : ℝ) * (beta : ℝ) ^ ex := by
-    simpa [mx, ex, fexp, generic_format] using hx
+    simpa [mx, ex, fexp, generic_format,
+      FloatSpec.Core.Generic_fmt.generic_format] using hx
   have hy_repr : y = (my : ℝ) * (beta : ℝ) ^ ey := by
-    simpa [my, ey, fexp, generic_format] using hy
+    simpa [my, ey, fexp, generic_format,
+      FloatSpec.Core.Generic_fmt.generic_format] using hy
   let fprod : FloatSpec.Core.Defs.FlocqFloat beta :=
     FloatSpec.Core.Defs.FlocqFloat.mk (mx * my) ep
   have hz_repr : z = _root_.F2R fprod := by
@@ -264,11 +266,12 @@ lemma mult_error_FLX_aux (x y : ℝ)
     have hferr_ne : _root_.F2R ferr ≠ 0 := by
       intro hf0
       apply h_nonzero
-      simpa [herr_repr, fexp, z] using hf0
+      rw [← herr_repr]
+      exact hf0
     have hmag_err_le : FloatSpec.Core.Raux.mag beta (_root_.F2R ferr) ≤ ez := by
       have h := FloatSpec.Core.Raux.mag_le_bpow (beta := beta)
         (x := _root_.F2R ferr) (e := ez) hβ hferr_ne
-        (by simpa [herr_repr] using herr_lt)
+        (by rw [herr_repr]; exact herr_lt)
       simpa using h True.intro
     have hcexp_err :
         cexp beta fexp (_root_.F2R ferr) =
@@ -297,7 +300,8 @@ theorem mult_error_FLX (x y : ℝ)
         FloatSpec.Core.Generic_fmt.cexp beta (FLX_exp prec)
             (FloatSpec.Core.Generic_fmt.roundR beta (FLX_exp prec) rnd (x * y) - (x * y)) ≤
           f.Fexp := by
-      simpa [hf_eq] using hcexp_le
+      rw [← hf_eq]
+      exact hcexp_le
     exact
       (FloatSpec.Core.Generic_fmt.generic_format_F2R'
         (beta := beta) (fexp := FLX_exp prec)
@@ -324,7 +328,8 @@ lemma mult_bpow_exact_FLX (x : ℝ) (e : Int)
     have hpow : FloatSpec.Core.Raux.bpow beta e = (beta : ℝ) ^ n := by
       simp [FloatSpec.Core.Raux.bpow, n]
     have hx_repr : x = (m : ℝ) * (beta : ℝ) ^ ex := by
-      simpa [m, ex, fexp, generic_format] using hx
+      simpa [m, ex, fexp, generic_format,
+        FloatSpec.Core.Generic_fmt.generic_format] using hx
     let f : FloatSpec.Core.Defs.FlocqFloat beta :=
       FloatSpec.Core.Defs.FlocqFloat.mk m (ex + n)
     have htarget :
@@ -416,7 +421,8 @@ theorem mult_error_FLT (x y : ℝ)
           (beta : ℝ) ^ (emin + 2 * prec - 1) := by
       have h := FloatSpec.Core.Raux.bpow_le beta (emin + prec)
         (emin + 2 * prec - 1) hβ hexp_le
-      simpa [FloatSpec.Core.Raux.bpow] using h True.intro
+      simpa [FloatSpec.Core.Raux.bpow_le_check, Std.Do.wp, Std.Do.PostCond.noThrow,
+        Id.run, pure, FloatSpec.Core.Raux.bpow] using h True.intro
     exact le_trans hbpow_le (by simpa [FloatSpec.Core.Raux.bpow] using hbound_under)
   have hcexp_eq :
       cexp beta (FLT_exp emin prec) z = cexp beta (FLX_exp prec) z := by
@@ -561,7 +567,7 @@ theorem mult_error_FLT (x y : ℝ)
       simp [cexp, FLT_exp, FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.FLT.FLT_exp]
     rw [hflt_cexp]
-    exact max_le (by simpa [hflx_cexp] using hcexp_flx_le) hemin_le_fexp
+    exact max_le (by rw [← hflx_cexp]; exact hcexp_flx_le) hemin_le_fexp
   have hf_eq_flt :
       _root_.F2R f =
         FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x * y) - (x * y) := by
@@ -575,7 +581,8 @@ theorem mult_error_FLT (x y : ℝ)
       (beta := beta) (fexp := FLT_exp emin prec)
       (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x * y) - (x * y))
       (f := f)) ⟨hβ, hf_eq_flt, fun _ => by
-        simpa [hf_eq_flt] using hflt_cexp_le⟩
+        rw [← hf_eq_flt]
+        exact hflt_cexp_le⟩
 
 /-- F2R greater than or equal to power bound.
 
@@ -648,9 +655,11 @@ theorem mult_error_FLT_ge_bpow (x y : ℝ) (e : Int)
       simpa [hy0] using h_bound
     exact (not_lt_of_ge hle0) hpow_pos
   have hx_repr : x = (mx : ℝ) * (beta : ℝ) ^ ex := by
-    simpa [mx, ex, fexp, generic_format] using hx
+    simpa [mx, ex, fexp, generic_format,
+      FloatSpec.Core.Generic_fmt.generic_format] using hx
   have hy_repr : y = (my : ℝ) * (beta : ℝ) ^ ey := by
-    simpa [my, ey, fexp, generic_format] using hy
+    simpa [my, ey, fexp, generic_format,
+      FloatSpec.Core.Generic_fmt.generic_format] using hy
   let fprod : FloatSpec.Core.Defs.FlocqFloat beta :=
     FloatSpec.Core.Defs.FlocqFloat.mk (mx * my) ep
   have hprod_repr : x * y = _root_.F2R fprod := by
@@ -742,21 +751,23 @@ theorem mult_error_FLT_ge_bpow (x y : ℝ) (e : Int)
   have hbpow_le_ep :
       FloatSpec.Core.Raux.bpow beta e ≤ FloatSpec.Core.Raux.bpow beta ep := by
     have h := FloatSpec.Core.Raux.bpow_le beta e ep hβ he_le_ep
-    simpa [FloatSpec.Core.Raux.bpow] using h True.intro
+    simpa [FloatSpec.Core.Raux.bpow_le_check, Std.Do.wp, Std.Do.PostCond.noThrow,
+      Id.run, pure, FloatSpec.Core.Raux.bpow] using h True.intro
   have hferr_ge :
       FloatSpec.Core.Raux.bpow beta ferr.Fexp ≤ |_root_.F2R ferr| :=
     F2R_ge (beta := beta) (f := ferr)
       (by
         intro hzero
         apply h_nonzero
-        simpa [herr_repr] using hzero)
+        rw [← herr_repr]
+        exact hzero)
       hβ
   calc
     FloatSpec.Core.Raux.bpow beta e ≤ FloatSpec.Core.Raux.bpow beta ep := hbpow_le_ep
     _ = FloatSpec.Core.Raux.bpow beta ferr.Fexp := by simp [ferr]
     _ ≤ |_root_.F2R ferr| := hferr_ge
     _ = |FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x * y) - (x * y)| := by
-          simpa [herr_repr, fexp]
+          rw [herr_repr]
 
 /-- Multiplication by power of beta is exact in FLT -/
 lemma mult_bpow_exact_FLT (x : ℝ) (e : Int)
@@ -780,7 +791,8 @@ lemma mult_bpow_exact_FLT (x : ℝ) (e : Int)
     have hpow : FloatSpec.Core.Raux.bpow beta e = (beta : ℝ) ^ n := by
       simp [FloatSpec.Core.Raux.bpow, n]
     have hx_repr : x = (m : ℝ) * (beta : ℝ) ^ ex := by
-      simpa [m, ex, fexp, generic_format] using hx
+      simpa [m, ex, fexp, generic_format,
+        FloatSpec.Core.Generic_fmt.generic_format] using hx
     let f : FloatSpec.Core.Defs.FlocqFloat beta :=
       FloatSpec.Core.Defs.FlocqFloat.mk m (ex + n)
     have htarget :
@@ -868,7 +880,8 @@ lemma mult_bpow_pos_exact_FLT (x : ℝ) (e : Int)
     have hpow : FloatSpec.Core.Raux.bpow beta e = (beta : ℝ) ^ n := by
       simp [FloatSpec.Core.Raux.bpow, n]
     have hx_repr : x = (m : ℝ) * (beta : ℝ) ^ ex := by
-      simpa [m, ex, fexp, generic_format] using hx
+      simpa [m, ex, fexp, generic_format,
+        FloatSpec.Core.Generic_fmt.generic_format] using hx
     let f : FloatSpec.Core.Defs.FlocqFloat beta :=
       FloatSpec.Core.Defs.FlocqFloat.mk m (ex + n)
     have htarget :

@@ -347,7 +347,8 @@ theorem Rnd_DN_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_DN_pt_monotone_check
   -- Reduce to the underlying proposition about monotonicity of DN-points.
   classical
-  simp [ pure, round_pred_monotone]
+  simp [pure, round_pred_monotone, decide_eq_true_eq]
+  apply decide_eq_true
   intro x y f g hx hy hxy
   -- Unpack the DN-point facts for x ↦ f and y ↦ g.
   rcases hx with ⟨hfF, hf_le_x, hmax_x⟩
@@ -469,7 +470,8 @@ theorem Rnd_UP_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_UP_pt_monotone_check
   -- Reduce to the underlying proposition about monotonicity of UP-points.
   classical
-  simp [ pure, round_pred_monotone]
+  simp [pure, round_pred_monotone, decide_eq_true_eq]
+  apply decide_eq_true
   intro x y f g hx hy hxy
   -- Use minimality of the UP-point at x with candidate g.
   -- From hy we have `F g` and `y ≤ g`; transitivity gives `x ≤ g`.
@@ -2856,7 +2858,8 @@ theorem Rnd_NA_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_NA_pt_monotone_check
   classical
   -- Reduce to proving the monotonicity proposition directly.
-  simp [ pure, round_pred_monotone]
+  simp [pure, round_pred_monotone, decide_eq_true_eq]
+  apply decide_eq_true
   -- As in the NG monotonicity proof, we first show that any nearest point
   -- is either a DN-point or an UP-point at the same input.
   have nearest_DN_or_UP

@@ -63,12 +63,12 @@ lemma mag_div_F2R (m1 e1 m2 e2 : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
   set y : ℝ := (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))
   have hx_ne : x ≠ 0 := by
     have hx_pos : 0 < x := by
-      simpa [FloatSpec.Core.Defs.F2R] using
+      simpa [x, FloatSpec.Core.Defs.F2R] using
         (FloatSpec.Core.Float_prop.F2R_gt_0 (beta := beta) (f := FlocqFloat.mk m1 e1) Hβ hm1_pos)
     exact ne_of_gt hx_pos
   have hy_ne : y ≠ 0 := by
     have hy_pos : 0 < y := by
-      simpa [FloatSpec.Core.Defs.F2R] using
+      simpa [y, FloatSpec.Core.Defs.F2R] using
         (FloatSpec.Core.Float_prop.F2R_gt_0 (beta := beta) (f := FlocqFloat.mk m2 e2) Hβ hm2_pos)
     exact ne_of_gt hy_pos
   -- Use generic magnitude bound under division from Core.Raux
@@ -462,7 +462,7 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
           trivial
       have hinSimple : inbetween_float beta (Fdiv_core beta m1 e1 m2 e2 e).fst e qR
             (Fdiv_core beta m1 e1 m2 e2 e).snd := by
-        simpa [wp, PostCond.noThrow, pure] using hinst
+        simpa [qR, wp, PostCond.noThrow, pure] using hinst
       have hmag := mag_div_F2R (beta := beta) m1 e1 m2 e2 hm1_pos hm2_pos Hβ
         ⟨hm1_pos, hm2_pos⟩
       have hmag1 := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits

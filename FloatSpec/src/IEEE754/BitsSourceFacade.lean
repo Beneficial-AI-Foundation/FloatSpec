@@ -308,7 +308,9 @@ theorem split_bits_of_binary_float_correct (mw ew : Int)
     (x : binary_float (mw + 1) (Zpower 2 (ew - 1))) :
     split_bits mw ew (bits_of_binary_float mw ew x) =
       split_bits_of_binary_float mw ew x := by
-  rw [bits_eq_join_split]
+  have hbits := bits_eq_join_split mw ew x
+  simp only [sourcePrec, sourceEmax] at hbits
+  rw [hbits]
   rcases hs : split_bits_of_binary_float mw ew x with ⟨s, m, e⟩
   have hr := source_fields_range mw ew Hmw Hew x
   simp only [hs] at hr ⊢
@@ -320,7 +322,9 @@ theorem bits_of_binary_float_range (mw ew : Int)
     (x : binary_float (mw + 1) (Zpower 2 (ew - 1))) :
     0 ≤ bits_of_binary_float mw ew x ∧
       bits_of_binary_float mw ew x < Zpower 2 (mw + ew + 1) := by
-  rw [bits_eq_join_split]
+  have hbits := bits_eq_join_split mw ew x
+  simp only [sourcePrec, sourceEmax] at hbits
+  rw [hbits]
   rcases hs : split_bits_of_binary_float mw ew x with ⟨s, m, e⟩
   have hr := source_fields_range mw ew Hmw Hew x
   simp only [hs] at hr ⊢
@@ -497,8 +501,10 @@ theorem binary_float_of_bits_aux_correct (mw ew : Int)
                 (prec:=sourcePrec mw) (emax:=sourceEmax ew) (k:=mw.toNat) (n:=n+1)
             · omega
             · rw [zpower_eq_pow_toNat hmw] at hm
+              change 0 ≤ Int.ofNat (n + 1) ∧
+                Int.ofNat (n + 1) < Int.ofNat (2 ^ mw.toNat) at hm
               have hm' : ((n + 1 : Nat) : Int) < ((2 ^ mw.toNat : Nat) : Int) := by
-                simpa only [Int.ofNat_eq_natCast] using hm.2
+                exact hm.2
               exact_mod_cast hm'
             · simpa [sourceEmin] using hmaxBound
     | negSucc n => omega
@@ -513,8 +519,10 @@ theorem binary_float_of_bits_aux_correct (mw ew : Int)
               apply nan_payload_valid_of_lt_pow
                   (prec:=sourcePrec mw) (k:=mw.toNat) (n:=n+1)
               · rw [zpower_eq_pow_toNat hmw] at hm
+                change 0 ≤ Int.ofNat (n + 1) ∧
+                  Int.ofNat (n + 1) < Int.ofNat (2 ^ mw.toNat) at hm
                 have hm' : ((n + 1 : Nat) : Int) < ((2 ^ mw.toNat : Nat) : Int) := by
-                  simpa only [Int.ofNat_eq_natCast] using hm.2
+                  exact hm.2
                 exact_mod_cast hm'
               · rw [hprec]
                 omega
@@ -536,18 +544,21 @@ theorem binary_float_of_bits_aux_correct (mw ew : Int)
               · exact hprec
               · have hlow : Zpower 2 mw ≤ m + Zpower 2 mw := by omega
                 rw [hsum, zpower_eq_pow_toNat hmw] at hlow
+                change Int.ofNat (2 ^ mw.toNat) ≤ Int.ofNat (n + 1) at hlow
                 have hlow' : ((2 ^ mw.toNat : Nat) : Int) ≤ ((n + 1 : Nat) : Int) := by
-                  simpa only [Int.ofNat_eq_natCast] using hlow
+                  exact hlow
                 exact_mod_cast hlow'
               · have hmUpper : m + Zpower 2 mw < 2 * Zpower 2 mw := by omega
                 rw [hsum, zpower_eq_pow_toNat hmw] at hmUpper
+                change Int.ofNat (n + 1) <
+                  Int.ofNat (2 * 2 ^ mw.toNat) at hmUpper
                 have hp : (2 : Nat) ^ (mw.toNat + 1) = 2 * 2 ^ mw.toNat := by
                   rw [pow_succ]
                   ring
                 rw [hp]
                 have hmUpper' : ((n + 1 : Nat) : Int) <
                     ((2 * 2 ^ mw.toNat : Nat) : Int) := by
-                  simpa only [Int.ofNat_eq_natCast, Nat.cast_mul, Nat.cast_ofNat] using hmUpper
+                  exact hmUpper
                 exact_mod_cast hmUpper'
               · unfold sourceEmin
                 omega
@@ -750,8 +761,12 @@ theorem bits_of_binary_float_of_bits (mw ew : Int)
   simp only [hs] at hr
   have hm := hr.1
   have he := hr.2
-  unfold binary_float_of_bits binary_float_of_bits_aux
-  rw [bits_of_fullFloatToBinaryFloat]
+  unfold binary_float_of_bits
+  have hbits := bits_of_fullFloatToBinaryFloat mw ew
+    (binary_float_of_bits_aux mw ew x)
+    (binary_float_of_bits_aux_correct mw ew Hmw Hew Hmax x)
+  rw [hbits]
+  unfold binary_float_of_bits_aux
   nth_rewrite 2 [← hj]
   rw [hs]
   dsimp only

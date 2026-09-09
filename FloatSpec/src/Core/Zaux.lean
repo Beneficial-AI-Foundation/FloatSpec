@@ -1083,7 +1083,6 @@ export Zeq_bool_prop (Zeq_bool_true_ Zeq_bool_false_)
     the integers are equal. This provides a computational
     version of equality.
 -/
-@[spec]
 theorem Zeq_bool_spec (x y : Int) : Zeq_bool_prop x y (Zeq_bool x y) := by
   by_cases h : x = y
   · simpa [Zeq_bool, h] using Zeq_bool_true_ (x := x) (y := y) h
@@ -1109,7 +1108,6 @@ export Zle_bool_prop (Zle_bool_true_ Zle_bool_false_)
     The boolean less-or-equal test returns true if and only if
     x ≤ y. This provides a computational version of the ordering.
 -/
-@[spec]
 theorem Zle_bool_spec (x y : Int) : Zle_bool_prop x y (Zle_bool x y) := by
   by_cases h : x ≤ y
   · simpa [Zle_bool, h] using Zle_bool_true_ (x := x) (y := y) h
@@ -1132,7 +1130,6 @@ inductive Zlt_bool_prop (x y : Int) : Bool → Prop where
 export Zlt_bool_prop (Zlt_bool_true_ Zlt_bool_false_)
 
 /-- Specification: Boolean strict ordering test -/
-@[spec]
 theorem Zlt_bool_spec (x y : Int) : Zlt_bool_prop x y (Zlt_bool x y) := by
   by_cases h : x < y
   · simpa [Zlt_bool, h] using Zlt_bool_true_ (x := x) (y := y) h
@@ -1574,7 +1571,6 @@ inductive Zcompare_prop (x y : Int) : Ordering → Prop where
 export Zcompare_prop (Zcompare_Lt_ Zcompare_Eq_ Zcompare_Gt_)
 
 /-- FLoCq `Zcompare_spec`. -/
-@[spec]
 theorem Zcompare_spec (x y : Int) : Zcompare_prop x y (Zcompare x y) := by
   by_cases hxy : x < y
   · simpa [Zcompare, hxy] using Zcompare_Lt_ (x := x) (y := y) hxy

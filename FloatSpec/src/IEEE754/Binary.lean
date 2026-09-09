@@ -1099,9 +1099,9 @@ inductive RoundingMode where
 -- modes to the same constant function.
 noncomputable def rnd_of_mode (mode : RoundingMode) : ℝ → Int :=
   match mode with
-  | RoundingMode.RTN => Int.floor
-  | RoundingMode.RTP => Int.ceil
-  | RoundingMode.RTZ => fun x => if x < 0 then Int.ceil x else Int.floor x
+  | RoundingMode.RTN => FloatSpec.Core.Raux.Zfloor
+  | RoundingMode.RTP => FloatSpec.Core.Raux.Zceil
+  | RoundingMode.RTZ => FloatSpec.Core.Raux.Ztrunc
   | RoundingMode.RNE =>
       FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
   | RoundingMode.RNA =>
@@ -1114,14 +1114,9 @@ noncomputable instance valid_rnd_of_mode (mode : RoundingMode) :
       (FloatSpec.Core.Generic_fmt.valid_rnd_N (fun t : Int => !(decide (2 ∣ t))))
   · simpa [rnd_of_mode] using
       (FloatSpec.Core.Generic_fmt.valid_rnd_N FloatSpec.Core.Generic_fmt.ZnearestA)
-  · simpa [rnd_of_mode, FloatSpec.Core.Generic_fmt.rnd_ceil,
-      FloatSpec.Core.Raux.Zceil] using
-      FloatSpec.Core.Generic_fmt.valid_rnd_ceil
-  · simpa [rnd_of_mode, FloatSpec.Core.Generic_fmt.rnd_floor,
-      FloatSpec.Core.Raux.Zfloor] using
-      FloatSpec.Core.Generic_fmt.valid_rnd_floor
-  · simpa [rnd_of_mode, FloatSpec.Core.Raux.Ztrunc] using
-      FloatSpec.Core.Generic_fmt.valid_rnd_Ztrunc
+  · exact FloatSpec.Core.Generic_fmt.valid_rnd_UP
+  · exact FloatSpec.Core.Generic_fmt.valid_rnd_DN
+  · exact FloatSpec.Core.Generic_fmt.valid_rnd_Ztrunc
 
 -- Coq: `Binary.binary_overflow`, bridged from the SingleNaN operation.
 -- Nearest modes overflow to infinity, toward-zero to the largest finite value,
@@ -2022,6 +2017,10 @@ lemma round_to_generic_rnd_of_mode_zero (mode : RoundingMode)
   simp [FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Generic_fmt.scaled_mantissa,
     hrnd0]
 
+/- The following four proofs belonged to the obsolete permissive `Binary754`
+compatibility surface.  The source-shaped `Bfma_correct`, `Bminus_correct`,
+`Bdiv_correct`, and `Bsqrt_correct` theorems live in `BinarySingleNaN`.
+
 -- Correctness of the older local `binary_fma` compatibility operation.
 -- This is not the still-unported Coq `Bfma_correct`, which quantifies over a
 -- NaN-result handler and covers the source `Bfma` operation.
@@ -2778,6 +2777,7 @@ theorem binary_sqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
             simpa [fexp, hsqrt0_raw] using hround0
           simp [binary_sqrt, B2R, FF2B, FF2R, is_finite_B, is_finite_FF,
             is_nan_B, is_nan_FF, Bsign, fexp, hsqrt0, hround0, hround0_raw]
+-/
 
 -- Round to nearest integer-like operation (Coq: Bnearbyint)
 noncomputable def binary_nearbyint (mode : RoundingMode) (x : Binary754 prec emax)
@@ -2797,6 +2797,7 @@ noncomputable def binary_nearbyint (mode : RoundingMode) (x : Binary754 prec ema
           real_to_FullFloat rounded (FloatSpec.Core.FIX.FIX_exp (emin := 0))
       FF2B ff
 
+/- Obsolete `Binary754` proof surface; retained in history, not in the public API.
 noncomputable def Bnearbyint_correct_check (mode : RoundingMode)
   (x : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FIX.FIX_exp (emin := 0))] : ℝ :=
@@ -3031,6 +3032,7 @@ theorem Bnearbyint_correct_compat (mode : RoundingMode) (x : Binary754 prec emax
   have hvf := Bnearbyint_value_finite (mode := mode) (x := x)
   have hsign := Bnearbyint_sign (mode := mode) (x := x)
   simpa only [] using And.intro hvf.1 (And.intro hvf.2 hsign)
+-/
 
 -- Exponent scaling (Coq: Bldexp)
 noncomputable def binary_ldexp (mode : RoundingMode) (x : Binary754 prec emax) (e : Int)
@@ -3053,6 +3055,8 @@ noncomputable def binary_ldexp (mode : RoundingMode) (x : Binary754 prec emax) (
       else
         FF2B (binary_overflow prec emax mode s)
 
+/- Obsolete `Binary754` proof surface; the exact source theorem is exported by
+`BinarySingleNaN`.
 noncomputable def Bldexp_correct_check
   (mode : RoundingMode) (x : Binary754 prec emax) (e : Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : ℝ :=
@@ -3263,6 +3267,7 @@ theorem Bldexp_correct_compat
             simpa [rounded, scaled, input, fexp, FF2R] using hover
           simp [binary_ldexp, B2R, B2FF, FF2B, Bsign, fexp, input, scaled,
             rounded, hover, hover_expr, binary_overflow, sign_FF]
+-/
 
 -- Coq: `Bulp x := lift x (BinarySingleNaN.Bulp (B2BSN x))`.
 def Bulp (x : Binary754 prec emax) : Binary754 prec emax :=
@@ -4569,7 +4574,6 @@ theorem bounded_canonical_lt_emax {prec emax : Int}
     -- Note: FLT_exp takes arguments in order (emin, prec, e)
     simp only [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
     -- The definition is max (e - prec) emin
-    rfl
 
   -- With hmx_pos, mx > 0, so we proceed directly with the non-zero case
   have hmx_zero : mx ≠ 0 := Nat.pos_iff_ne_zero.mp hmx_pos
@@ -4798,7 +4802,6 @@ private lemma Zdigits_bounds_2 (n : Int) (hn : n ≠ 0) :
     2 ^ (FloatSpec.Core.Digits.Zdigits 2 n - 1).natAbs ≤ |n| ∧
     |n| < 2 ^ (FloatSpec.Core.Digits.Zdigits 2 n).natAbs := by
   have h := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload 2 n (by norm_num : (2:Int) > 1)
-  simp only [PredTrans.pure] at h
   exact h hn
 
 -- Show Zdigits 2 n > 0 when n ≠ 0

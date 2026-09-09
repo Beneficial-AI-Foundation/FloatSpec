@@ -558,10 +558,11 @@ theorem relative_error_N_F2R_emin_ex (m : Int) (hβ : 1 < beta)
   by_cases hx : x = 0
   · refine ⟨0, ?_, ?_⟩
     · simpa [b] using hb_nonneg
-    · have hZ0 : FloatSpec.Core.Generic_fmt.Znearest choice 0 = 0 := by
+    · change FloatSpec.Calc.Round.round beta fexp (Znearest choice) x = x * (1 + 0)
+      have hZ0 : FloatSpec.Core.Generic_fmt.Znearest choice 0 = 0 := by
         unfold FloatSpec.Core.Generic_fmt.Znearest
         simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Rcompare]
-      simp [x, hx, FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+      simp [hx, FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
         FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
         FloatSpec.Compat.Scaffold.ZnearestMode, hZ0]
   · refine ⟨(FloatSpec.Calc.Round.round beta fexp (Znearest choice) x - x) / x, ?_, ?_⟩
@@ -1737,10 +1738,12 @@ theorem relative_error_N_FLT_F2R_emin_ex (m : Int) (hβ : 1 < beta) :
   by_cases hx : x = 0
   · refine ⟨0, ?_, ?_⟩
     · simpa [b] using hb_nonneg
-    · have hZ0 : FloatSpec.Core.Generic_fmt.Znearest choice 0 = 0 := by
+    · change FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x =
+        x * (1 + 0)
+      have hZ0 : FloatSpec.Core.Generic_fmt.Znearest choice 0 = 0 := by
         unfold FloatSpec.Core.Generic_fmt.Znearest
         simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Rcompare]
-      simp [x, hx, FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+      simp [hx, FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
         FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
         FloatSpec.Compat.Scaffold.ZnearestMode, hZ0]
   · refine ⟨(FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x - x) / x,
@@ -2091,6 +2094,5 @@ theorem error_N_FLT (emin prec : Int) (hβ : 1 < beta) (h_pos : 0 < prec)
     eps * eta = 0 ∧
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x =
       x * (1 + eps) + eta := by
-  letI : Prec_gt_0 prec := ⟨h_pos⟩
-  exact error_N_FLT_from_prec_instance_payload
-    (beta := beta) (emin := emin) (prec := prec) hβ h_pos choice x
+  let hp : Prec_gt_0 prec := ⟨h_pos⟩
+  exact @error_N_FLT_from_prec_instance_payload beta _ emin prec hp hβ h_pos choice x

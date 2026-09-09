@@ -147,13 +147,13 @@ instance valid_rnd_FTZ (rnd : ℝ → Int) [Valid_rnd rnd] : Valid_rnd (Zrnd_FTZ
       simp [FloatSpec.Core.Raux.Rle_bool, h, hn, Valid_rnd.Zrnd_IZR (rnd := rnd) 0]
 
 /-- `Valid_exp` instance for the FTZ exponent function. -/
-instance FTZ_exp_valid [hp : Fact (0 < prec)] :
+instance FTZ_exp_valid :
     FloatSpec.Core.Generic_fmt.Valid_exp (FTZ_exp prec emin) := by
   refine ⟨?_⟩
   intro k; constructor
   · -- Large regime: if fexp k < k, then fexp (k+1) ≤ k
     intro hklt
-    have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr hp.out
+    have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr (Fact.out : 0 < prec)
     by_cases hk : k - prec < emin
     · by_cases hk1 : (k + 1) - prec < emin
       · simp [FTZ_exp, hk, hk1] at hklt ⊢
@@ -167,7 +167,7 @@ instance FTZ_exp_valid [hp : Fact (0 < prec)] :
         omega
   · -- Small regime: if k ≤ fexp k, then stability at fexp k and constancy below it
     intro hk
-    have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr hp.out
+    have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr (Fact.out : 0 < prec)
     have hk_branch : k - prec < emin := by
       by_contra hnot
       have hk_le : k ≤ k - prec := by simpa [FTZ_exp, hnot] using hk
@@ -396,8 +396,8 @@ theorem FLXN_format_FTZ (beta : Int) [ValidRadix beta] (x : ℝ) :
         (fexp2 := FloatSpec.Core.FLX.FLX_exp prec)
         (x := x))
         hβ hpoint hx_gf
-  letI : Prec_gt_0 prec := ⟨Fact.out⟩
-  exact (FloatSpec.Core.FLX.FLXN_format_generic (prec := prec) beta x) hrun
+  let hp : Prec_gt_0 prec := ⟨Fact.out⟩
+  exact @FloatSpec.Core.FLX.FLXN_format_generic prec beta _ hp x hrun
 
 end FloatSpec.Core.FTZ
 
@@ -417,7 +417,7 @@ theorem FTZ_format_FLXN (beta : Int) [ValidRadix beta] (x : ℝ) :
     (pure (FTZ_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
-  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  simp only [wp, PredTrans.apply, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   -- Unpack the preconditions
   rcases hpre with ⟨hβ, hlb, hx_flx⟩
   -- Abbreviations
@@ -425,7 +425,6 @@ theorem FTZ_format_FLXN (beta : Int) [ValidRadix beta] (x : ℝ) :
   -- Provide the FLX generic_format view of the hypothesis
   have hx_gf_flx :
       (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FLX.FLX_exp prec) x) := by
-    letI : Prec_gt_0 prec := ⟨Fact.out⟩
     exact (FloatSpec.Core.FLX.generic_format_FLXN (prec := prec) beta x) hx_flx
   -- Case split on whether the lower bound is strict
   by_cases hstrict : (beta : ℝ) ^ e1 < |x|
@@ -616,8 +615,11 @@ theorem round_FTZ_FLX (beta : Int) [ValidRadix beta]
     FloatSpec.Core.Generic_fmt.scaled_mantissa,
     FloatSpec.Core.Generic_fmt.cexp]
   rw [hexp]
-  simp only [Zrnd_FTZ, FloatSpec.Core.Raux.Rle_bool]
-  rw [if_pos]
+  have hscaledBool : FloatSpec.Core.Raux.Rle_bool 1
+      |x * (beta : ℝ) ^ (-FloatSpec.Core.FLX.FLX_exp prec M)| = true := by
+    simpa [FloatSpec.Core.Raux.Rle_bool, FloatSpec.Core.FLX.FLX_exp,
+      sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hscaledLower
+  simp only [Zrnd_FTZ, hscaledBool, Bool.true_eq, if_true]
   simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa,
     FloatSpec.Core.Generic_fmt.cexp, M] using hscaled
 

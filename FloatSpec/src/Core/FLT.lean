@@ -90,7 +90,7 @@ def FLT_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
     emin ≤ f.Fexp
 
 /-- `Valid_exp `instance for the FLT exponent function. -/
-instance FLT_exp_valid [Prec_gt_0 prec] :
+instance FLT_exp_valid :
     FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp prec emin) := by
   refine ⟨?_⟩
   intro k
@@ -447,7 +447,7 @@ theorem FLT_format_generic (beta : Int) [ValidRadix beta] (x : ℝ) :
     (pure (FLT_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  simp only [wp, PredTrans.apply, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   exact FLT_format_generic_run (prec := prec) (emin := emin) beta x hx
 
 /-- Compatibility specification for the exact source predicate. -/
@@ -485,7 +485,7 @@ theorem generic_format_FLT_bpow (beta : Int) [ValidRadix beta] (e : Int) :
     (pure ((generic_format beta (FLT_exp prec emin) ((beta : ℝ) ^ e))) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
-  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  simp only [wp, PredTrans.apply, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   rcases hpre with ⟨hβ, hemin_le_e⟩
   -- We will use `generic_format_bpow` once we show
   -- `FLT_exp prec emin (e + 1) ≤ e`.
@@ -721,7 +721,6 @@ theorem generic_format_FIX_FLT (beta : Int) [ValidRadix beta] (x : ℝ) :
               (fexp := FloatSpec.Core.FIX.FIX_exp (emin := emin))
               (m := m1) (e := e1) ⟨hβ, hbound⟩
   -- Rewriting F2R (m1,e1) back to x as established above
-  simp only [Id.run] at hgf hF2R
   rw [← hF2R]
   exact hgf
 
@@ -1281,7 +1280,6 @@ theorem ulp_FLT_exact_shift (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
         = (beta : ℝ) ^ (FLT_exp prec emin M) := by
     unfold FloatSpec.Core.Ulp.ulp
     have hcexp_eq : FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x = FLT_exp prec emin M := by
-      simp only [Id.run] at hcexp_x ⊢
       exact hcexp_x
     simp [hx_ne, hcexp_eq]
   have hulp_y :
@@ -1289,7 +1287,6 @@ theorem ulp_FLT_exact_shift (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
         = (beta : ℝ) ^ (FLT_exp prec emin N) := by
     unfold FloatSpec.Core.Ulp.ulp
     have hcexp_eq : FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e) = FLT_exp prec emin N := by
-      simp only [Id.run] at hcexp_y ⊢
       exact hcexp_y
     simp [hy_ne, hcexp_eq]
   -- Relate magnitudes under scaling directly: N = M + e
@@ -1499,7 +1496,6 @@ theorem succ_FLT_exact_shift_pos (beta : Int) [ValidRadix beta] (x : ℝ) (e : I
     rw [hsucc_y_run, hsucc_x_run, hulp_shift]
     ring
   -- Normalize to non-.run form for the Hoare triple
-  simp only [Id.run] at hsucc_run_eq
   -- Finalize the result pair equality in Id
   simpa [wp, PostCond.noThrow, bind, pure]
     using hsucc_run_eq

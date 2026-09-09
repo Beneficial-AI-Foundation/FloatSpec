@@ -1258,16 +1258,16 @@ theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   have hf_ne : f ≠ 0 := ne_of_gt hf_pos
   have hx_ne : x ≠ 0 := ne_of_gt hx_pos
   have hf_low :=
-    (FloatSpec.Core.Raux.mag_lower_bound beta f hbeta hf_ne) True.intro
+    FloatSpec.Core.Raux.bpow_mag_le beta f hbeta hf_ne
   have hf_high :=
-    (FloatSpec.Core.Raux.mag_upper_bound beta f hbeta hf_ne) True.intro
+    FloatSpec.Core.Raux.bpow_mag_gt beta f hbeta
   have hlow :
       (beta : ℝ) ^ (mag beta f - 1) ≤ |x| := by
     change (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f - 1) ≤ |x|
     rw [abs_of_pos hx_pos]
     have hf_low' :
         (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f - 1) ≤ f := by
-      simpa only [FloatSpec.Core.Raux.abs_val, abs_of_pos hf_pos] using hf_low
+      simpa only [abs_of_pos hf_pos] using hf_low
     exact le_trans hf_low' (by simpa only [f] using hx_lo)
   have hf1_le :
       F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta) ≤
@@ -1276,7 +1276,7 @@ theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
       (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f)
     apply F2R_p1_le_bpow (beta := beta) m e (mag beta f) hbeta hm_pos
     change f < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f)
-    simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hf_pos] using hf_high
+    simpa [abs_of_pos hf_pos] using hf_high
   have hupp : |x| < (beta : ℝ) ^ (mag beta f) := by
     change |x| < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f)
     rw [abs_of_pos hx_pos]

@@ -426,7 +426,8 @@ example : digitAux 2 5 1 ⟨1⟩ = 1 := by decide
 
 example : 0 < (2 : Int) ^ (0 : Nat) := by
   simpa only [wp, PostCond.noThrow, pure, Zpower_nat_less_check,
-    Id.run, ULift.up_down] using Zpower_nat_less 2 0 (by norm_num)
+    Id.run, ULift.up_down, PredTrans.pure, PredTrans.apply,
+    SPred.down_pure_nil] using Zpower_nat_less 2 0 (by norm_num)
 
 example : FloatSpec.Pff.Source.UniqueP 1
     (fun _ p => p = ⟨1, 0⟩) := by
@@ -452,9 +453,7 @@ example :
       |_root_.F2R (beta := 2)
         (⟨2, 0⟩ : FloatSpec.Core.Defs.FlocqFloat 2)| *
         ((1 / 2 : Real) * (2 : Real) ^ (1 - (2 : Int))) := by
-  simpa only [wp, PostCond.noThrow, pure, ClosestErrorBoundNormal_check,
-    Id.run, ULift.up_down] using
-      (ClosestErrorBoundNormal
+  have h := ClosestErrorBoundNormal
         ({ dExp := 0, vNum := 4 } : Fbound_skel)
         2 2 (2 : Real)
         (⟨2, 0⟩ : FloatSpec.Core.Defs.FlocqFloat 2)
@@ -468,4 +467,8 @@ example :
              norm_num [_root_.F2R],
          by
            norm_num [Fnormal, Fnormalize, Fbounded, Fdigit, Fshift,
-             FloatSpec.Core.Digits.Zdigits]⟩)
+             FloatSpec.Core.Digits.Zdigits]⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestErrorBoundNormal_check,
+    Id.run, ULift.up_down, PredTrans.pure, PredTrans.apply,
+    SPred.down_pure_nil] at h
+  convert h using 1 <;> norm_num

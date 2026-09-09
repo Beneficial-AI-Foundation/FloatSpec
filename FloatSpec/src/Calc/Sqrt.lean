@@ -14,7 +14,7 @@ import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Calc.Bracket
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Sqrt
+import Mathlib.Analysis.Real.Sqrt
 import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.SimprocWP

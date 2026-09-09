@@ -1468,7 +1468,7 @@ private lemma abs_Ztrunc_sub_lt_one (t : ℝ) :
       have htrip := FloatSpec.Core.Raux.Ztrunc_ceil (x := t) (le_of_lt ht)
       simpa [wp, PostCond.noThrow, Id.run] using htrip (by trivial)
     have hle : t ≤ ((FloatSpec.Core.Raux.Zceil t) : ℝ) := by
-      simpa using (Int.le_ceil t)
+      simpa [FloatSpec.Core.Raux.Zceil] using (Int.le_ceil t)
     have hlt : ((FloatSpec.Core.Raux.Zceil t) : ℝ) - 1 < t := by
       -- From Int.ceil_lt_add_one t: ⌈t⌉ < t + 1, hence ⌈t⌉ - 1 < t
       have h' : ((Int.ceil t : Int) : ℝ) < t + 1 := by simpa using Int.ceil_lt_add_one t
@@ -2591,16 +2591,6 @@ theorem error_lt_ulp_round
   -- Obtain `Exp_not_FTZ` from monotonicity (local bridge, inlined here to avoid
   -- forward references): either `fexp e < e` and monotonicity yields the step,
   -- or `e ≤ fexp e` and `Valid_exp` provides the bound.
-  haveI : Exp_not_FTZ fexp := by
-    refine ⟨?_ineq⟩
-    intro e; classical
-    by_cases hlt : fexp e < e
-    · have hle_succ : fexp e + 1 ≤ e := (Int.add_one_le_iff).mpr hlt
-      exact (FloatSpec.Core.Generic_fmt.Monotone_exp.mono (fexp := fexp) hle_succ)
-    · have hle : e ≤ fexp e := le_of_not_gt hlt
-      have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e)
-      have hsmall := (pair.right hle).left
-      simpa using hsmall
   have hulp_le : (ulp beta fexp x) ≤ (ulp beta fexp r) := by
     by_cases hr0 : r = 0
     · have hlow := FloatSpec.Core.Raux.mag_lower_bound
@@ -3356,7 +3346,11 @@ private theorem id_m_ulp_ge_bpow_early (x : ℝ) (e : Int)
         simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (e - c)))
       have hzpow_nat : b ^ (max (e - c) 0) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
         have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
-        simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
+        calc
+          b ^ max (e - c) 0 = b ^ (e - c) := by rw [hmax]
+          _ = b ^ ((Int.toNat (e - c)) : Int) := hzpow_int
+          _ = b ^ Int.toNat (e - c) := hzpow_nat'
+          _ = ((beta ^ Int.toNat (e - c) : Int) : ℝ) := hcast_pow
       have hlt_int : (beta ^ (Int.toNat (e - c)) : Int) < m := by
         have : ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) < (m : ℝ) := by
           simpa [hzpow_nat] using hx'_max
@@ -4123,7 +4117,11 @@ theorem id_p_ulp_le_bpow (x : ℝ) (e : Int)
           ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
         simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (e - c)))
       have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
-      simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
+      calc
+        b ^ max (e - c) 0 = b ^ (e - c) := by rw [hmax]
+        _ = b ^ ((Int.toNat (e - c)) : Int) := hzpow_int
+        _ = b ^ Int.toNat (e - c) := hzpow_nat'
+        _ = ((beta ^ Int.toNat (e - c) : Int) : ℝ) := hcast_pow
     -- Conclude: cast inequality becomes an inequality on b ^ (max (e - c) 0)
     have hle_max : (m : ℝ) + 1 ≤ b ^ (max (e - c) 0) := by
       simpa [Int.cast_add, Int.cast_one, hzpow_nat] using hcast
@@ -4579,7 +4577,7 @@ theorem pred_pos_ge_0 (x : ℝ) (hx : 0 < x)
         FloatSpec.Core.Generic_fmt.scaled_mantissa
         FloatSpec.Core.Generic_fmt.cexp at Fx
       -- Reduce the Id‑monad and read the equality out of Fx
-      simpa using Fx
+      simpa [c, FloatSpec.Core.Generic_fmt.cexp] using Fx
     -- Name the integer mantissa n
     set n : Int := (FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) with hn
     have hx_repr' : x = (n : ℝ) * (beta : ℝ) ^ c := by simpa [hn] using hx_repr
@@ -5259,7 +5257,7 @@ private theorem succ_le_lt_aux_pos_core
           have : (0 : ℝ) * s < (m : ℝ) * s := by
             simpa [hy_eq, zero_mul] using hy_pos
           exact lt_of_mul_lt_mul_right this hs_nonneg
-        have hm_pos_int : 0 < m := (Int.cast_lt).1 (by simpa using hm_pos_real)
+        have hm_pos_int : 0 < m := by exact_mod_cast hm_pos_real
         have hone_le_m_real : (1 : ℝ) ≤ (m : ℝ) := by
           have hone_le_m : (1 : Int) ≤ m := Int.add_one_le_iff.mpr hm_pos_int
           exact_mod_cast hone_le_m
@@ -5922,9 +5920,9 @@ private theorem ulp_DN_run_theorem
         -- Therefore r ≤ x
         have hr_le_x : r ≤ x := by
           have : r ≤ s * (beta : ℝ) ^ exp := by
-            simp only [FloatSpec.Core.Generic_fmt.round_to_generic,
-                       FloatSpec.Core.Generic_fmt.cexp] at hmul_le ⊢
-            convert hmul_le using 2
+            simpa [r, FloatSpec.Core.Generic_fmt.round_to_generic,
+              FloatSpec.Core.Generic_fmt.roundR,
+              FloatSpec.Core.Generic_fmt.scaled_mantissa, s, exp] using hmul_le
           simpa [hs_mul] using this
         -- Also x < β^(mag x) from mag_upper_bound
         have hx_lt_bpow : x < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x) := by
@@ -6447,7 +6445,6 @@ theorem round_N_le_midp
             simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hFx_spec
             have hx_repr : x = (((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp e)))) : Int) : ℝ) * b ^ (fexp e) := by
               have := (hFx_spec hβ).mp Fx
-              simp only [FloatSpec.Core.Defs.F2R, Id.run, bind, pure] at this
               convert this using 2 <;> simp [b, he]
 
             -- Define m as the scaled mantissa
@@ -6634,7 +6631,6 @@ theorem round_N_le_midp
                 (fexp := fexp) (x := x)
               simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hFx_spec
               have hx_eq := (hFx_spec hβ).mp Fx
-              simp only [FloatSpec.Core.Defs.F2R, Id.run, bind, pure] at hx_eq
               simp only [FloatSpec.Core.Raux.mag, Id.run, bind, pure] at hx_eq he
               -- hx_eq shows x = Ztrunc(...) * β^(fexp(mag(x))) where mag(x) = e (since he: e = mag(x).run)
               rw [← he] at hx_eq
@@ -8136,7 +8132,11 @@ private theorem mag_plus_eps_theorem
       have hzpow_nat' : b ^ ((Int.toNat (ex - c)) : Int) = b ^ (Int.toNat (ex - c)) := zpow_ofNat b (Int.toNat (ex - c))
       have hcast_pow : b ^ (Int.toNat (ex - c)) = ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (ex - c)))
       have hmax : max (ex - c) 0 = ex - c := max_eq_left hd_nonneg
-      simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
+      calc
+        b ^ max (ex - c) 0 = b ^ (ex - c) := by rw [hmax]
+        _ = b ^ ((Int.toNat (ex - c)) : Int) := hzpow_int
+        _ = b ^ Int.toNat (ex - c) := hzpow_nat'
+        _ = ((beta ^ Int.toNat (ex - c) : Int) : ℝ) := hcast_pow
     have hle_max : ((m + 1 : Int) : ℝ) ≤ b ^ (max (ex - c) 0) := by simpa [Int.cast_add, Int.cast_one, hzpow_nat] using hcast
     have hle_real : (m : ℝ) + 1 ≤ b ^ (ex - c) := by
       have hmax : max (ex - c) 0 = ex - c := max_eq_left hd_nonneg
@@ -8377,7 +8377,7 @@ theorem round_DN_plus_eps_pos
             have : (0 : ℝ) * s < (m : ℝ) * s := by
               simpa [hdn_eq, zero_mul] using hdn_pos
             exact lt_of_mul_lt_mul_right this hs_nonneg
-          have hm_pos_int : 0 < m := (Int.cast_lt).1 (by simpa using hm_pos_real)
+          have hm_pos_int : 0 < m := by exact_mod_cast hm_pos_real
           have hone_le_m_real : (1 : ℝ) ≤ (m : ℝ) := by
             have hone_le_m : (1 : Int) ≤ m := Int.add_one_le_iff.mpr hm_pos_int
             exact_mod_cast hone_le_m
@@ -9298,7 +9298,6 @@ theorem ulp_le_pos
       exact ((zpow_right_strictMono₀ hβR).monotone hfe_le)
   | inr hxeq =>
       -- x = 0: use that `ulp 0 ≤ ulp y` under (Monotone_exp → not_FTZ)
-      letI : Exp_not_FTZ fexp := inferInstance
       have h := (ulp_ge_ulp_0 (beta := beta) (fexp := fexp) (x := y)) hβ trivial
       simpa [wp, PostCond.noThrow, Id.run, bind, pure, hxeq] using h
 
@@ -9396,7 +9395,7 @@ theorem ulp_le_id (x : ℝ) (hx : 0 < x)
     have hxdivpos : 0 < x / (beta : ℝ) ^ e := div_pos hx hpow_pos
     simpa [hx_prod, hne] using hxdivpos
   -- Convert real positivity `(0 < (n : ℝ))` to integer positivity `0 < n`.
-  have hn_pos_int : 0 < n := (Int.cast_lt).1 (by simpa using hn_pos)
+  have hn_pos_int : 0 < n := by exact_mod_cast hn_pos
   have hn_ge_one : (1 : Int) ≤ n := (Int.add_one_le_iff.mpr hn_pos_int)
   -- Lift to ℝ and multiply the inequality by the positive factor β^e.
   have hn_ge_one_real : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn_ge_one
@@ -9811,7 +9810,11 @@ theorem id_m_ulp_ge_bpow (x : ℝ) (e : Int)
         have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
         -- Use the bridge `hzpow_int` and `zpow_ofNat` to rewrite to Nat exponent,
         -- then apply `Int.cast_pow` to identify the RHS.
-        simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
+        calc
+          b ^ max (e - c) 0 = b ^ (e - c) := by rw [hmax]
+          _ = b ^ ((Int.toNat (e - c)) : Int) := hzpow_int
+          _ = b ^ Int.toNat (e - c) := hzpow_nat'
+          _ = ((beta ^ Int.toNat (e - c) : Int) : ℝ) := hcast_pow
       -- Cast the strict inequality back to integers to obtain a ≤ bound
       have hlt_int : (beta ^ (Int.toNat (e - c)) : Int) < m := by
         -- Use `Int.cast_lt` on hzpow_nat and hx'_max
@@ -11678,9 +11681,7 @@ private theorem round_N_to_format_le_succ_theorem
         (beta := beta) (fexp := fexp) (x := x) hβ Fx
     simpa [hrx] using
       succ_run_ge_self (beta := beta) (fexp := fexp) hβ x
-  · haveI : Exp_not_FTZ fexp :=
-      exp_not_FTZ_of_monotone (beta := beta) (fexp := fexp)
-    have hsucc_d_eq_u :
+  · have hsucc_d_eq_u :
         succ beta fexp d = u := by
       have h :=
         succ_DN_eq_UP_theorem

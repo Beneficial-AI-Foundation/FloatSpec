@@ -4,6 +4,8 @@ import FloatSpec.src.Calc.Round
 import FloatSpec.src.Prop.Relative
 import Mathlib.Data.Real.Basic
 
+set_option linter.style.haveILetI false
+
 -- Error of the rounded-to-nearest addition is representable
 -- Translated from Coq file: flocq/src/Prop/Plus_error.v
 
@@ -956,8 +958,6 @@ theorem round_plus_F2R (x y : ℝ)
       simpa [_root_.F2R, FloatSpec.Core.Defs.F2R] using h
     exact hround_c.trans hchange
 
-variable [FloatSpec.Core.Ulp.Exp_not_FTZ fexp]
-
 /-- Round plus greater equal ulp -/
 theorem round_plus_ge_ulp (x y : ℝ)
   (hβ : 1 < beta)
@@ -1089,7 +1089,8 @@ theorem round_FLT_plus_ge (x y : ℝ) (e : Int)
         ulp beta (FLT_exp emin prec) (x / (beta : ℝ)) := by
     have h := FloatSpec.Core.Raux.bpow_le beta e
       (cexp beta (FLT_exp emin prec) (x / (beta : ℝ))) hβ he_cexp
-    simpa [FloatSpec.Core.Raux.bpow, hulp] using h True.intro
+    simpa [FloatSpec.Core.Raux.bpow, FloatSpec.Core.Raux.bpow_le_check, hulp]
+      using h True.intro
   haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
     simpa [FLT_exp] using
       (inferInstance : FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec emin))
@@ -1184,7 +1185,8 @@ theorem round_FLX_plus_ge (x y : ℝ) (e : Int)
         ulp beta (FLX_exp prec) (x / (beta : ℝ)) := by
     have h := FloatSpec.Core.Raux.bpow_le beta e
       (cexp beta (FLX_exp prec) (x / (beta : ℝ))) hβ he_cexp
-    simpa [FloatSpec.Core.Raux.bpow, hulp] using h True.intro
+    simpa [FloatSpec.Core.Raux.bpow, FloatSpec.Core.Raux.bpow_le_check, hulp]
+      using h True.intro
   haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLX_exp prec) := by
     simpa [FLX_exp] using
       (inferInstance : FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLX.FLX_exp prec))

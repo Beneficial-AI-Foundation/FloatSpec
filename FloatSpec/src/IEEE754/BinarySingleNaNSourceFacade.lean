@@ -293,7 +293,7 @@ theorem Bcompare_correct {prec emax : Int} (x y : binary_float prec emax)
   have hcode : BcompareIntCompat x y =
       some (FloatSpec.Core.Raux.Rcompare (B2R x) (B2R y)) := by
     simpa [BcompareIntCompat, B2R_toCompat, wp, Std.Do.PostCond.noThrow,
-      pure] using h trivial
+      pure, _root_.Bcompare_check] using h trivial
   simp [Bcompare, hcode, orderingOfCompareCode_Rcompare]
 
 theorem Bcompare_swap {prec emax : Int} (x y : binary_float prec emax) :
@@ -304,7 +304,7 @@ theorem Bcompare_swap {prec emax : Int} (x y : binary_float prec emax) :
   have hcode : BcompareIntCompat y x = match BcompareIntCompat x y with
       | some c => some (-c)
       | none => none := by
-    simpa [BcompareIntCompat, wp, Std.Do.PostCond.noThrow, pure] using h trivial
+    exact h trivial
   unfold Bcompare
   rw [hcode]
   cases BcompareIntCompat x y <;> simp
@@ -389,7 +389,8 @@ theorem B2R_Bsign_inj {prec emax : Int}
   cases x with
   | B754_zero sx =>
       cases y with
-      | B754_zero sy => simpa [Bsign] using hs
+      | B754_zero sy =>
+          simpa [Bsign, binarySingleNaNFloatToB754, BSN_sign] using hs
       | B754_infinity sy =>
           simp [BinarySingleNaN.is_finite, binarySingleNaNFloatToB754,
             BSN_is_finite] at hy
@@ -460,7 +461,9 @@ theorem abs_B2R_le_emax_minus_prec {prec emax : Int}
         (by norm_num) (by omega)
       have hpow : FloatSpec.Core.Raux.bpow 2 (emax - prec) ≤
           FloatSpec.Core.Raux.bpow 2 emax := by
-        simpa [wp, Std.Do.PostCond.noThrow, pure] using htrip trivial
+        simpa [wp, Std.Do.PostCond.noThrow, pure,
+          FloatSpec.Core.Raux.bpow_le_check, FloatSpec.Core.Raux.bpow] using
+          htrip trivial
       simp [B2R, binarySingleNaNFloatToB754, B754_to_R]
       exact hpow
   | B754_finite s m e hm hb =>
@@ -480,7 +483,8 @@ theorem abs_B2R_lt_emax {prec emax : Int}
     |B2R x| < FloatSpec.Core.Raux.bpow 2 emax := by
   cases x with
   | B754_zero s | B754_infinity s | B754_nan =>
-      simpa [B2R, binarySingleNaNFloatToB754, B754_to_R] using
+      simpa [B2R, binarySingleNaNFloatToB754, B754_to_R,
+        FloatSpec.Core.Raux.bpow] using
         (zpow_pos (by norm_num : (0 : ℝ) < 2) emax)
   | B754_finite s m e hm hb =>
       let mp := binaryPositiveOfNat m hm
@@ -669,8 +673,8 @@ theorem is_nan_binary_normalize {prec emax : Int}
             (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
               FloatSpec.Core.Defs.FlocqFloat 2)) 0 <;>
           cases mode <;>
-          simp [B2SF, binarySingleNaNFloatToStandardFloat,
-            binary_overflow, bsn_binary_overflow, overflow_to_inf, hs] at hc
+          simp_all [B2SF, binarySingleNaNFloatToStandardFloat,
+            binary_overflow, bsn_binary_overflow, overflow_to_inf]
 
 noncomputable abbrev Bnearbyint {prec emax : Int}
     [Prec_lt_emax prec emax] :=
@@ -723,7 +727,8 @@ theorem Bnearbyint_correct {prec emax : Int}
       · change B754_to_R (binarySingleNaNFloatToB754
             (standardFloatToBinarySingleNaNFloat z hc.1)) = _
         rw [Binary.B2R_standardFloatToBinarySingleNaNFloat]
-        simpa [z, B2R, binarySingleNaNFloatToB754, B754_to_R] using hc.2.1
+        simpa [z, B2R, binarySingleNaNFloatToB754, B754_to_R,
+          SF2R] using hc.2.1
       · constructor
         · change BSN_is_finite (binarySingleNaNFloatToB754
               (standardFloatToBinarySingleNaNFloat z hc.1)) = true
@@ -888,7 +893,8 @@ theorem Bldexp_correct {prec emax : Int}
           (FloatSpec.Core.Raux.bpow 2 emax) = true
       · rw [if_pos hlt] at hbranch ⊢
         exact ⟨hvalue.trans hbranch.1, hfinite.trans hbranch.2.1,
-          hsign.trans (by simpa [Bsign] using hbranch.2.2)⟩
+          hsign.trans (by simpa [Bsign, binarySingleNaNFloatToB754,
+            BSN_sign] using hbranch.2.2)⟩
       · rw [if_neg hlt] at hbranch ⊢
         rw [hout, B2SF_SF2B]
         exact hbranch
@@ -1040,7 +1046,8 @@ private theorem Bldexp_Bone_spec {prec emax : Int}
     (prec:=prec) (emin:=3 - emax - prec) (beta:=2) (e:=k)
   have hfmt : FloatSpec.Core.Generic_fmt.generic_format 2
       (FLT_exp (3 - emax - prec) prec) (FloatSpec.Core.Raux.bpow 2 k) := by
-    simpa [FLT_exp, wp, Std.Do.PostCond.noThrow, pure] using
+    simpa [FLT_exp, wp, Std.Do.PostCond.noThrow, pure,
+      FloatSpec.Core.Raux.bpow] using
       hfmtTrip ⟨by norm_num, hmin⟩
   have hround := FloatSpec.Core.Generic_fmt.roundR_generic
     (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
@@ -1343,7 +1350,8 @@ theorem Bulp'_correct {prec emax : Int}
         (prec:=prec) (emin:=3 - emax - prec) (beta:=2)
       have hulp0 : FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) 0 =
           FloatSpec.Core.Raux.bpow 2 (3 - emax - prec) := by
-        simpa [FLT_exp, wp, Std.Do.PostCond.noThrow, pure] using
+        simpa [FLT_exp, wp, Std.Do.PostCond.noThrow, pure,
+          FloatSpec.Core.Raux.bpow] using
           hulp0Trip trivial
       apply B2R_Bsign_inj _ _ hb'.2.1 hulp.2.1
       · rw [hb'.1, hulp.1]
@@ -1593,7 +1601,7 @@ private theorem BpredPosPrime_toB754 {prec emax : Int}
       have hexpRaw : (Bfrexp xf).2 =
           (ExperimentalSingleNaNArithmetic.Bfrexp_bsn
             (prec:=prec) (emax:=emax) raw).2 := by
-        simpa [raw, xf] using congrArg Prod.snd hfrexp
+        simpa [raw, xf, binarySingleNaNFloatToB754] using congrArg Prod.snd hfrexp
       change binarySingleNaNFloatToB754
           (Bminus RoundingMode.RNE xf
             (if 2 * m == (2 : Nat) ^ prec.toNat then
@@ -1662,7 +1670,8 @@ private theorem BsuccPrime_toB754 {prec emax : Int}
       cases s
       · rfl
       · simpa [Bsucc', ExperimentalSingleNaNArithmetic.Bsucc', Bmax_float,
-          Binary.BmaxFloatSingle, binarySingleNaNFloatToB754] using
+          Binary.BmaxFloatSingle, ExperimentalSingleNaNArithmetic.Bmax_float,
+          binarySingleNaNFloatToB754] using
           (Bopp_toB754 (Bmax_float (prec:=prec) (emax:=emax)))
   | B754_nan => rfl
   | B754_finite s m e hm hb =>
@@ -1792,7 +1801,8 @@ theorem Bmult_correct {prec emax : Int}
           m.toRoundingMode
           (Bool.xor (_root_.BinarySingleNaN.Bsign x)
             (_root_.BinarySingleNaN.Bsign y)) := by
-  simpa only [Bmult, round_mode] using
+  rw [round_mode_eq_rnd_of_mode]
+  simpa only [Bmult] using
     (_root_.BinarySingleNaN.Bmult_correct (prec:=prec) (emax:=emax)
       m.toRoundingMode x y)
 
@@ -1823,7 +1833,8 @@ theorem Bplus_correct {prec emax : Int}
           _root_.bsn_binary_overflow (prec:=prec) (emax:=emax)
             m.toRoundingMode (_root_.BinarySingleNaN.Bsign x) ∧
         _root_.BinarySingleNaN.Bsign x = _root_.BinarySingleNaN.Bsign y := by
-  simpa only [Bplus, round_mode] using
+  rw [round_mode_eq_rnd_of_mode]
+  simpa only [Bplus] using
     (_root_.BinarySingleNaN.Bplus_correct (prec:=prec) (emax:=emax)
       m.toRoundingMode x y hx hy)
 
@@ -1854,7 +1865,8 @@ theorem Bminus_correct {prec emax : Int}
           _root_.bsn_binary_overflow (prec:=prec) (emax:=emax)
             m.toRoundingMode (_root_.BinarySingleNaN.Bsign x) ∧
         _root_.BinarySingleNaN.Bsign x = !(_root_.BinarySingleNaN.Bsign y) := by
-  simpa only [Bminus, round_mode] using
+  rw [round_mode_eq_rnd_of_mode]
+  simpa only [Bminus] using
     (_root_.BinarySingleNaN.Bminus_correct (prec:=prec) (emax:=emax)
       m.toRoundingMode x y hx hy)
 
@@ -1883,7 +1895,8 @@ theorem Bfma_correct {prec emax : Int}
       _root_.BinarySingleNaN.B2SF (Bfma m x y z) =
         _root_.bsn_binary_overflow (prec:=prec) (emax:=emax)
           m.toRoundingMode (FloatSpec.Core.Raux.Rlt_bool res 0) := by
-  simpa only [Bfma, round_mode] using
+  rw [round_mode_eq_rnd_of_mode]
+  simpa only [Bfma] using
     (_root_.BinarySingleNaN.Bfma_correct (prec:=prec) (emax:=emax)
       m.toRoundingMode x y z hx hy hz)
 
@@ -1915,7 +1928,8 @@ theorem Bdiv_correct {prec emax : Int}
           m.toRoundingMode
           (Bool.xor (_root_.BinarySingleNaN.Bsign x)
             (_root_.BinarySingleNaN.Bsign y)) := by
-  simpa only [Bdiv, round_mode] using
+  rw [round_mode_eq_rnd_of_mode]
+  simpa only [Bdiv] using
     (_root_.BinarySingleNaN.Bdiv_correct (prec:=prec) (emax:=emax)
       m.toRoundingMode x y hy)
 
@@ -1962,8 +1976,8 @@ theorem Bsqrt_correct {prec emax : Int}
     (_root_.BinarySingleNaN.is_nan (Bsqrt m x) = false →
       _root_.BinarySingleNaN.Bsign (Bsqrt m x) =
         _root_.BinarySingleNaN.Bsign x) := by
-  simpa only [Bsqrt, round_mode] using
-    (_root_.BinarySingleNaN.Bsqrt_correct (prec:=prec) (emax:=emax)
-      m.toRoundingMode x)
+  rw [round_mode_eq_rnd_of_mode]
+  exact _root_.BinarySingleNaN.Bsqrt_correct (prec:=prec) (emax:=emax)
+    m.toRoundingMode x
 
 end FloatSpec.IEEE754.BinarySingleNaN.Source
