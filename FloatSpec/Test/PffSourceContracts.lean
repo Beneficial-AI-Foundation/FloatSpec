@@ -411,6 +411,9 @@ example : FloatSpec.Core.Zaux.Z_div_eucl 5 (-3) = (-2, -1) := by
 #check @FloatSpec.Pff.Source.MonotoneP
 #check @FloatSpec.Pff.Source.MinExList
 #check @Zpower_nat_less
+#check @Zpower_nat_monotone_S
+#check @Zpower_nat_monotone_lt
+#check @Zpower_nat_monotone_le
 #check @make_bound
 
 example : (0 : Int) ≤ 0 - FLX_exp 0 0 :=

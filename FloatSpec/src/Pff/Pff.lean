@@ -67676,40 +67676,36 @@ theorem Zpower_nat_less (n : Int) (q : Nat) :
   show 0 < n ^ q
   exact pow_pos (lt_trans Int.zero_lt_one hn) q
 
--- Coq: `Zpower_nat_monotone_S` — n^(q+1) ≥ n^q for n ≥ 1
+-- Coq: `Zpower_nat_monotone_S` — n^(q+1) > n^q for n > 1
 noncomputable def Zpower_nat_monotone_S_check (n : Int) (q : Nat) : Unit :=
   ()
 
 theorem Zpower_nat_monotone_S (n : Int) (q : Nat) :
-    ⦃⌜1 ≤ n⌝⦄
-    (pure (Zpower_nat_monotone_S_check n q) : Id Unit)
-    ⦃⇓_ => ⌜n ^ q ≤ n ^ (q+1)⌝⦄ := by
-  intro h
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_S_check, Id.run,
-    ULift.up_down]
-  show n ^ q ≤ n ^ (q+1)
-  have hn : 1 ≤ n := h
-  have hpos : (0 : ℤ) ≤ n := by omega
-  have : n ^ q ≥ 1 := one_le_pow₀ hn
-  rw [pow_succ]
-  nlinarith
-
--- Coq: `Zpower_nat_monotone_lt` — if 1 < n then n^q < n^(q+1)
-noncomputable def Zpower_nat_monotone_lt_check (n : Int) (q : Nat) : Unit :=
-  ()
-
-theorem Zpower_nat_monotone_lt (n : Int) (q : Nat) :
     ⦃⌜1 < n⌝⦄
-    (pure (Zpower_nat_monotone_lt_check n q) : Id Unit)
+    (pure (Zpower_nat_monotone_S_check n q) : Id Unit)
     ⦃⇓_ => ⌜n ^ q < n ^ (q+1)⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_lt_check, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_S_check, Id.run,
     ULift.up_down]
   show n ^ q < n ^ (q+1)
   have hn : 1 < n := h
   have : n ^ q ≥ 1 := one_le_pow₀ (le_of_lt hn)
   rw [pow_succ]
   nlinarith
+
+-- Coq: `Zpower_nat_monotone_lt` — strict exponent monotonicity for n > 1
+noncomputable def Zpower_nat_monotone_lt_check (n : Int) (p q : Nat) : Unit :=
+  ()
+
+theorem Zpower_nat_monotone_lt (n : Int) (p q : Nat) :
+    ⦃⌜1 < n ∧ p < q⌝⦄
+    (pure (Zpower_nat_monotone_lt_check n p q) : Id Unit)
+    ⦃⇓_ => ⌜n ^ p < n ^ q⌝⦄ := by
+  intro ⟨hn, hpq⟩
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_lt_check,
+    Id.run, ULift.up_down]
+  show n ^ p < n ^ q
+  exact pow_lt_pow_right₀ hn hpq
 
 -- Coq: `Zpower_nat_anti_monotone_lt` — strict order of powers reflects strict
 -- order of exponents when the integer base is greater than one.
@@ -67728,21 +67724,19 @@ theorem Zpower_nat_anti_monotone_lt (n : Int) (p q : Nat) :
   have hpow_le : n ^ q ≤ n ^ p := pow_le_pow_right₀ hn_le hqp
   exact (not_lt_of_ge hpow_le) hpq
 
--- Coq: `Zpower_nat_monotone_le` — if 1 ≤ n then n^q ≤ n^r for q ≤ r
+-- Coq: `Zpower_nat_monotone_le` — exponent monotonicity for n > 1
 noncomputable def Zpower_nat_monotone_le_check (n : Int) (q r : Nat) : Unit :=
   ()
 
 theorem Zpower_nat_monotone_le (n : Int) (q r : Nat) :
-    ⦃⌜1 ≤ n ∧ q ≤ r⌝⦄
+    ⦃⌜1 < n ∧ q ≤ r⌝⦄
     (pure (Zpower_nat_monotone_le_check n q r) : Id Unit)
     ⦃⇓_ => ⌜n ^ q ≤ n ^ r⌝⦄ := by
   intro ⟨hn, hqr⟩
   simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_le_check, Id.run,
     ULift.up_down]
   show n ^ q ≤ n ^ r
-  have hn' : 1 ≤ n := hn
-  have hqr' : q ≤ r := hqr
-  exact pow_le_pow_right₀ hn' hqr'
+  exact pow_le_pow_right₀ (le_of_lt hn) hqr
 
 -- Alias for Coq's Zpower_nat on integers
 -- (moved earlier)
