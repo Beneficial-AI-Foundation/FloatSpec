@@ -108,11 +108,14 @@ abbrev PFnormal {beta : Int} [ValidRadix beta]
 -- Minimal `make_bound` used in Coq proofs
 noncomputable def make_bound (beta p E : Int)
     (hβ : 1 < beta := by omega) : Fbound :=
-  let v := Zpower_nat beta p.natAbs
+  let v := if p < 0 then 1 else Zpower_nat beta p.natAbs
   let de := if E ≤ 0 then -E else E
   have hv : 0 < v := by
-    unfold v Zpower_nat
-    exact pow_pos (lt_trans Int.zero_lt_one hβ) _
+    unfold v
+    split
+    · norm_num
+    · unfold Zpower_nat
+      exact pow_pos (lt_trans Int.zero_lt_one hβ) _
   have hd : 0 ≤ de := by
     unfold de
     split <;> omega
@@ -151,7 +154,8 @@ theorem make_bound_p (beta p E : Int)
     make_bound_p_check beta p E
     ⦃⇓_ => ⌜(make_bound beta p E).vNum = Zpower_nat beta p.natAbs⌝⦄ := by
   intro _
-  simp [wp, PostCond.noThrow, make_bound_p_check, pure, make_bound, Bound]
+  have hp0 : ¬ p < 0 := by omega
+  simp [wp, PostCond.noThrow, make_bound_p_check, pure, make_bound, Bound, hp0]
 
 /-- The `make_bound` exponent box is below every `boundR` sentinel exponent.
 

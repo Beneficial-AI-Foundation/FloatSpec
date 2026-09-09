@@ -411,12 +411,16 @@ example : FloatSpec.Core.Zaux.Z_div_eucl 5 (-3) = (-2, -1) := by
 #check @FloatSpec.Pff.Source.MonotoneP
 #check @FloatSpec.Pff.Source.MinExList
 #check @Zpower_nat_less
+#check @make_bound
 
 example : (0 : Int) ≤ 0 - FLX_exp 0 0 :=
   relative_error_FLX_aux 0 0
 
 example : (0 : Int) ≤ 0 - FLT_exp 0 0 0 :=
   relative_error_FLT_aux 0 0 0 (by norm_num)
+
+example : (make_bound 2 (-1) 0).vNum = 1 := by
+  rfl
 
 example : pos_length ⟨0⟩ = 0 := by decide
 example : pos_length ⟨1⟩ = 1 := by decide

@@ -1639,8 +1639,9 @@ theorem Veltkamp_Even (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec
       Veltkamp_reducedBound beta bo s.toNat prec.toNat (hβ := hβ) =
         toFboundSkel (make_bound beta (prec - s) emin (hβ := hβ)) := by
     have habs : (prec - s).natAbs = (prec - s).toNat := by omega
+    have hredNotNeg : ¬ prec - s < 0 := by omega
     simp [Veltkamp_reducedBound, bo, bnd, toFboundSkel, make_bound,
-      Bound, hemin, hnatSub, habs]
+      Bound, hemin, hnatSub, habs, hredNotNeg]
   have hReduced :
       ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
         _root_.F2R (beta:=beta) g = hx ∧
@@ -1756,8 +1757,9 @@ theorem Veltkamp (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec]
     omega
   have hredBoundEq :
       Veltkamp_reducedBound beta bo s.toNat prec.toNat = toFboundSkel redBound := by
+    have hredNotNeg : ¬ prec - s < 0 := by omega
     simp [Veltkamp_reducedBound, bo, bnd, redBound, redPrec, toFboundSkel,
-      make_bound, Bound, hemin, hnatSub, habsRed]
+      make_bound, Bound, hemin, hnatSub, habsRed, hredNotNeg]
   rcases hCore with ⟨g, hgVal, hgClose⟩
   rcases pff_round_is_round_N beta redBound redPrec x g hredPBound hredPrec hβ
       (by simpa [hredBoundEq] using hgClose) with ⟨choice', hgRound⟩
@@ -1845,8 +1847,9 @@ theorem Veltkamp_tail (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec
   have hsplitBound :
       Veltkamp_splitBound beta bo s.toNat =
         toFboundSkel (make_bound beta s emin (hβ := hβ)) := by
+    have hsNotNeg : ¬ s < 0 := by omega
     simp [Veltkamp_splitBound, bo, bnd, toFboundSkel, make_bound,
-      Bound, hemin, habsS]
+      Bound, hemin, habsS, hsNotNeg]
   have hTail :
       ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
         _root_.F2R (beta:=beta) g = tx ∧
