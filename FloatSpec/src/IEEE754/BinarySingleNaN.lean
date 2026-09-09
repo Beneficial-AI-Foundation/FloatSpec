@@ -10,6 +10,7 @@ import Init.Data.Float
 import Std.Do.Triple
 import Std.Tactic.Do
 import Mathlib.Data.Real.Basic
+import Batteries.Data.Float.Lemmas
 
 open Real
 open Std.Do
@@ -8453,6 +8454,28 @@ def standardFloatOfModel64 (x : Float.Model) : StandardFloat :=
 /-- Decode Lean's binary32 logical model to the FLoCq single-NaN surface. -/
 def standardFloatOfModel32 (x : Float32.Model) : StandardFloat :=
   standardFloatOfUnpacked x.unpack
+
+@[simp] theorem model64OfStandardFloat_standardFloatOfModel64
+    (x : Float.Model) :
+    model64OfStandardFloat (standardFloatOfModel64 x) = x := by
+  cases x with
+  | mk bits valid =>
+      rw [Float.Model.mk.injEq]
+      apply UInt64.toBitVec_inj.mp
+      simpa [model64OfStandardFloat, standardFloatOfModel64,
+        Float.Model.pack, Float.Model.unpack] using
+        Float.Model.UnpackedFloat.pack_unpack_of_valid valid
+
+@[simp] theorem model32OfStandardFloat_standardFloatOfModel32
+    (x : Float32.Model) :
+    model32OfStandardFloat (standardFloatOfModel32 x) = x := by
+  cases x with
+  | mk bits valid =>
+      rw [Float32.Model.mk.injEq]
+      apply UInt32.toBitVec_inj.mp
+      simpa [model32OfStandardFloat, standardFloatOfModel32,
+        Float32.Model.pack, Float32.Model.unpack] using
+        Float.Model.UnpackedFloat.pack_unpack_of_valid valid
 
 /-- Encode an exact FLoCq binary64 single-NaN value as Lean's logical model. -/
 def model64OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 53 1024) : Float.Model :=
