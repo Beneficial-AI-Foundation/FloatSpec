@@ -6,7 +6,7 @@ import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.IEEE754.BinarySingleNaN
-import Init.Data.Float
+import Batteries.Data.Float.Lemmas
 import Mathlib.Data.Real.Basic
 
 open Real
@@ -1898,6 +1898,356 @@ def float32OfBinary (x : _root_.binary32) : Float32 :=
 /-- Native `Float` view of a FLoCq binary64 value. -/
 def floatOfBinary (x : _root_.binary64) : Float :=
   Float.ofModel (model64OfBinary x)
+
+/-- Decoding a canonical Lean binary64 model yields a valid FLoCq binary64 value. -/
+theorem validStandardFloatOfModel64 (x : Float.Model) :
+    validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
+      (standardFloatOfModel64 x) = true := by
+  cases x with
+  | mk bits valid =>
+      simp only [standardFloatOfModel64, Float.Model.unpack]
+      fun_cases Float.Model.UnpackedFloat.unpack <;>
+        simp [standardFloatOfUnpacked,
+          validBinarySingleNaNStandardFloat, specFloat_bounded]
+      case case4 mantissaVec exponentVec exponent signVec sign hExpMax hExpZero hMantissa =>
+        have hmPos : 0 < mantissaVec.toNat :=
+          BitVec.toNat_pos_of_ne_zero hMantissa
+        have heq : exponent + 1 = -1074 := by
+          simp [exponent, hExpZero, Float.Model.Format.exponentBias]
+        have hspec := specFloat_bounded_of_bits_subnormal
+          (prec := 53) (emax := 1024) (mw := 52) (n := mantissaVec.toNat)
+          (by norm_num) mantissaVec.isLt (by norm_num)
+        simp only [specFloat_bounded, Bool.and_eq_true] at hspec
+        exact ⟨hmPos, by simpa [heq] using hspec.1, by omega⟩
+      case case5 mantissaVec exponentVec exponent signVec sign hExpMax hExpZero =>
+        have hmLt : mantissaVec.toNat < 2 ^ 52 := mantissaVec.isLt
+        have hmEq : (1#1 ++ mantissaVec).toNat = 2 ^ 52 + mantissaVec.toNat := by
+          simp only [BitVec.toNat_append]
+          simpa [Nat.shiftLeft_eq] using
+            (Nat.shiftLeft_add_eq_or_of_lt hmLt 1).symm
+        have hmLow : 2 ^ 52 ≤ (1#1 ++ mantissaVec).toNat := by omega
+        have hmHigh : (1#1 ++ mantissaVec).toNat < 2 ^ 53 := by
+          norm_num [hmEq] at ⊢
+          omega
+        have heVecLt : exponentVec.toNat < 2047 := by
+          have hlt : exponentVec.toNat < 2048 := by
+            simpa using exponentVec.isLt
+          have hne : exponentVec.toNat ≠ 2047 := by
+            intro h
+            apply hExpMax
+            apply BitVec.eq_of_toNat_eq
+            simp [h]
+          omega
+        have heq : exponent = (exponentVec.toNat : Int) - 1075 := by
+          simp [exponent, Float.Model.Format.exponentBias]
+        have hspec := specFloat_bounded_of_bits_normal
+          (prec := 53) (emax := 1024) (mw := 52)
+          (n := (1#1 ++ mantissaVec).toNat) (e := exponent)
+          (by norm_num) hmLow hmHigh (by
+            have : 0 < exponentVec.toNat := by
+              exact Nat.pos_of_ne_zero (by
+                intro h
+                apply hExpZero
+                apply BitVec.eq_of_toNat_eq
+                simp [h])
+            omega) (by omega)
+        simp only [specFloat_bounded, Bool.and_eq_true, decide_eq_true_eq] at hspec
+        exact ⟨lt_of_lt_of_le (by norm_num) hmLow, hspec.1, hspec.2⟩
+
+/-- Decoding a canonical Lean binary32 model yields a valid FLoCq binary32 value. -/
+theorem validStandardFloatOfModel32 (x : Float32.Model) :
+    validBinarySingleNaNStandardFloat (prec := 24) (emax := 128)
+      (standardFloatOfModel32 x) = true := by
+  cases x with
+  | mk bits valid =>
+      simp only [standardFloatOfModel32, Float32.Model.unpack]
+      fun_cases Float.Model.UnpackedFloat.unpack <;>
+        simp [standardFloatOfUnpacked,
+          validBinarySingleNaNStandardFloat, specFloat_bounded]
+      case case4 mantissaVec exponentVec exponent signVec sign hExpMax hExpZero hMantissa =>
+        have hmPos : 0 < mantissaVec.toNat :=
+          BitVec.toNat_pos_of_ne_zero hMantissa
+        have heq : exponent + 1 = -149 := by
+          simp [exponent, hExpZero, Float.Model.Format.exponentBias]
+        have hspec := specFloat_bounded_of_bits_subnormal
+          (prec := 24) (emax := 128) (mw := 23) (n := mantissaVec.toNat)
+          (by norm_num) mantissaVec.isLt (by norm_num)
+        simp only [specFloat_bounded, Bool.and_eq_true] at hspec
+        exact ⟨hmPos, by simpa [heq] using hspec.1, by omega⟩
+      case case5 mantissaVec exponentVec exponent signVec sign hExpMax hExpZero =>
+        have hmLt : mantissaVec.toNat < 2 ^ 23 := mantissaVec.isLt
+        have hmEq : (1#1 ++ mantissaVec).toNat = 2 ^ 23 + mantissaVec.toNat := by
+          simp only [BitVec.toNat_append]
+          simpa [Nat.shiftLeft_eq] using
+            (Nat.shiftLeft_add_eq_or_of_lt hmLt 1).symm
+        have hmLow : 2 ^ 23 ≤ (1#1 ++ mantissaVec).toNat := by omega
+        have hmHigh : (1#1 ++ mantissaVec).toNat < 2 ^ 24 := by
+          norm_num [hmEq] at ⊢
+          omega
+        have heVecLt : exponentVec.toNat < 255 := by
+          have hlt : exponentVec.toNat < 256 := by
+            simpa using exponentVec.isLt
+          have hne : exponentVec.toNat ≠ 255 := by
+            intro h
+            apply hExpMax
+            apply BitVec.eq_of_toNat_eq
+            simp [h]
+          omega
+        have heq : exponent = (exponentVec.toNat : Int) - 150 := by
+          simp [exponent, Float.Model.Format.exponentBias]
+        have hspec := specFloat_bounded_of_bits_normal
+          (prec := 24) (emax := 128) (mw := 23)
+          (n := (1#1 ++ mantissaVec).toNat) (e := exponent)
+          (by norm_num) hmLow hmHigh (by
+            have : 0 < exponentVec.toNat := by
+              exact Nat.pos_of_ne_zero (by
+                intro h
+                apply hExpZero
+                apply BitVec.eq_of_toNat_eq
+                simp [h])
+            omega) (by omega)
+        simp only [specFloat_bounded, Bool.and_eq_true, decide_eq_true_eq] at hspec
+        exact ⟨lt_of_lt_of_le (by norm_num) hmLow, hspec.1, hspec.2⟩
+
+theorem standardFloatOfModel64_model64OfStandardFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    standardFloatOfModel64 (model64OfStandardFloat x) = x := by
+  cases x with
+  | S754_zero s => cases s <;> native_decide
+  | S754_infinity s => cases s <;> native_decide
+  | S754_nan => native_decide
+  | S754_finite s m e =>
+      have hx' : 0 < m ∧
+          specFloat_bounded (prec := 53) (emax := 1024) m e = true := by
+        simpa [validBinarySingleNaNStandardFloat] using hx
+      have hm : 0 < m := hx'.1
+      have hrange : m < 2 ^ 53 ∧ -1074 ≤ e ∧ e ≤ 971 := by
+        have h := range_bounded_of_specFloat_bounded
+          (prec := 53) (emax := 1024) m e hm hx'.2
+        have h' := (show
+          (m < 2 ^ 53 ∧ -1074 ≤ e) ∧ e ≤ 971 by
+            simpa [bounded, Bool.and_eq_true, decide_eq_true_eq] using h)
+        exact ⟨h'.1.1, h'.1.2, h'.2⟩
+      have hNoOverflow :
+          ¬2 ^ Float.Model.Format.binary64.exponentBits ≤
+            (e + (Float.Model.Format.binary64.exponentBias : Int) +
+              (Float.Model.Format.binary64.mantissaBitsWithoutImplicit : Int)).toNat + 1 := by
+        norm_num [Float.Model.Format.exponentBias]
+        omega
+      simp only [standardFloatOfModel64, model64OfStandardFloat,
+        Float.Model.pack, Float.Model.unpack, unpackedOfStandardFloat, hm,
+        dite_true]
+      unfold Float.Model.UnpackedFloat.pack
+      dsimp only
+      rw [ite_eq_right hNoOverflow]
+      by_cases hnormal : m.log2 + 1 = 53
+      · have hnormal' :
+            m.log2 + 1 = Float.Model.Format.binary64.mantissaBits := by
+          simpa [Float.Model.Format.mantissaBits] using hnormal
+        rw [ite_eq_left hnormal']
+        have hlog : m.log2 = 52 := by omega
+        have hmLow : 2 ^ 52 ≤ m := by
+          simpa [hlog] using Nat.log2_self_le (Nat.ne_of_gt hm)
+        have hmMod : m % 2 ^ 52 = m - 2 ^ 52 := by
+          rw [Nat.mod_eq_sub_mod hmLow, Nat.mod_eq_of_lt]
+          omega
+        have hbiasedPos : 0 < (e + 1075).toNat := by omega
+        have hbiasedLt : (e + 1075).toNat < 2047 := by omega
+        have hbiasedEq :
+            (e + (Float.Model.Format.binary64.exponentBias : Int) + 52).toNat =
+              (e + 1075).toNat := by
+          norm_num [Float.Model.Format.exponentBias]
+          congr 1
+          omega
+        have hbiasedMod :
+            (e + (Float.Model.Format.binary64.exponentBias : Int) + 52).toNat % 2048 =
+              (e + 1075).toNat := by
+          rw [hbiasedEq, Nat.mod_eq_of_lt (by omega)]
+        have hbiasedMod' :
+            (e + 1023 + 52).toNat % 2048 = (e + 1075).toNat := by
+          simpa [Float.Model.Format.exponentBias] using hbiasedMod
+        have hmantissa : (1#1 ++ BitVec.ofNat 52 m).toNat = m := by
+          simp only [BitVec.toNat_append, BitVec.toNat_ofNat, hmMod]
+          rw [← Nat.shiftLeft_add_eq_or_of_lt (by omega)]
+          norm_num [Nat.shiftLeft_eq]
+          omega
+        unfold Float.Model.UnpackedFloat.unpack
+        cases s <;>
+        simp [Float.Model.UnpackedFloat.unpackSign_packComponents,
+          Float.Model.UnpackedFloat.Sign.ofBitVec,
+          Float.Model.UnpackedFloat.Sign.toBitVec,
+          modelSignOfBool, boolOfModelSign, standardFloatOfUnpacked,
+          Float.Model.Format.exponentBias,
+          ← BitVec.toNat_inj,
+          BitVec.toNat_ofNat, hbiasedMod',
+          hbiasedPos.ne', hbiasedLt.ne, hmantissa,
+          Int.toNat_of_nonneg (by omega : 0 ≤ e + 1075)]
+      · have hnormal' :
+            ¬m.log2 + 1 = Float.Model.Format.binary64.mantissaBits := by
+          simpa [Float.Model.Format.mantissaBits] using hnormal
+        rw [ite_eq_right hnormal']
+        have hlogLt : m.log2 < 52 := by
+          have : m.log2 < 53 := (Nat.log2_lt (Nat.ne_of_gt hm)).2 hrange.1
+          omega
+        have hmLt : m < 2 ^ 52 :=
+          (Nat.log2_lt (Nat.ne_of_gt hm)).1 hlogLt
+        have hzdigits : FloatSpec.Core.Digits.Zdigits 2 (m : Int) ≤ 52 := by
+          have htrip := FloatSpec.Core.Digits.Zdigits_le_Zpower
+            (beta := 2) (x := (m : Int)) (e := 52) (by decide)
+          simp only [PostCond.noThrow, pure] at htrip
+          apply htrip
+          constructor
+          · norm_num
+          · norm_num
+            exact_mod_cast hmLt
+        have hcanon := canonical_mantissa_of_specFloat_bounded hx'.2
+        have heq :
+            e = max (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e - 53) (-1074) := by
+          simpa [canonical_mantissa, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+            using eq_of_beq hcanon
+        have heMin : e = -1074 := by omega
+        have hmModSmall : m % 4503599627370496 = m := by
+          exact Nat.mod_eq_of_lt (by norm_num at hmLt ⊢; exact hmLt)
+        unfold Float.Model.UnpackedFloat.unpack
+        cases s <;>
+        simp [Float.Model.UnpackedFloat.unpackSign_packComponents,
+          Float.Model.UnpackedFloat.Sign.ofBitVec,
+          Float.Model.UnpackedFloat.Sign.toBitVec,
+          modelSignOfBool, boolOfModelSign, standardFloatOfUnpacked,
+          Float.Model.Format.exponentBias,
+          ← BitVec.toNat_inj,
+          BitVec.toNat_ofNat, hmModSmall, Nat.ne_of_gt hm, heMin]
+
+theorem standardFloatOfModel32_model32OfStandardFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    standardFloatOfModel32 (model32OfStandardFloat x) = x := by
+  cases x with
+  | S754_zero s => cases s <;> native_decide
+  | S754_infinity s => cases s <;> native_decide
+  | S754_nan => native_decide
+  | S754_finite s m e =>
+      have hx' : 0 < m ∧
+          specFloat_bounded (prec := 24) (emax := 128) m e = true := by
+        simpa [validBinarySingleNaNStandardFloat] using hx
+      have hm : 0 < m := hx'.1
+      have hrange : m < 2 ^ 24 ∧ -149 ≤ e ∧ e ≤ 104 := by
+        have h := range_bounded_of_specFloat_bounded
+          (prec := 24) (emax := 128) m e hm hx'.2
+        have h' := (show
+          (m < 2 ^ 24 ∧ -149 ≤ e) ∧ e ≤ 104 by
+            simpa [bounded, Bool.and_eq_true, decide_eq_true_eq] using h)
+        exact ⟨h'.1.1, h'.1.2, h'.2⟩
+      have hNoOverflow :
+          ¬2 ^ Float.Model.Format.binary32.exponentBits ≤
+            (e + (Float.Model.Format.binary32.exponentBias : Int) +
+              (Float.Model.Format.binary32.mantissaBitsWithoutImplicit : Int)).toNat + 1 := by
+        norm_num [Float.Model.Format.exponentBias]
+        omega
+      simp only [standardFloatOfModel32, model32OfStandardFloat,
+        Float32.Model.pack, Float32.Model.unpack, unpackedOfStandardFloat, hm,
+        dite_true]
+      unfold Float.Model.UnpackedFloat.pack
+      dsimp only
+      rw [ite_eq_right hNoOverflow]
+      by_cases hnormal : m.log2 + 1 = 24
+      · have hnormal' :
+            m.log2 + 1 = Float.Model.Format.binary32.mantissaBits := by
+          simpa [Float.Model.Format.mantissaBits] using hnormal
+        rw [ite_eq_left hnormal']
+        have hlog : m.log2 = 23 := by omega
+        have hmLow : 2 ^ 23 ≤ m := by
+          simpa [hlog] using Nat.log2_self_le (Nat.ne_of_gt hm)
+        have hmMod : m % 2 ^ 23 = m - 2 ^ 23 := by
+          rw [Nat.mod_eq_sub_mod hmLow, Nat.mod_eq_of_lt]
+          omega
+        have hbiasedPos : 0 < (e + 150).toNat := by omega
+        have hbiasedLt : (e + 150).toNat < 255 := by omega
+        have hbiasedEq :
+            (e + (Float.Model.Format.binary32.exponentBias : Int) + 23).toNat =
+              (e + 150).toNat := by
+          norm_num [Float.Model.Format.exponentBias]
+          congr 1
+          omega
+        have hbiasedMod :
+            (e + (Float.Model.Format.binary32.exponentBias : Int) + 23).toNat % 256 =
+              (e + 150).toNat := by
+          rw [hbiasedEq, Nat.mod_eq_of_lt (by omega)]
+        have hbiasedMod' :
+            (e + 127 + 23).toNat % 256 = (e + 150).toNat := by
+          simpa [Float.Model.Format.exponentBias] using hbiasedMod
+        have hmantissa : (1#1 ++ BitVec.ofNat 23 m).toNat = m := by
+          simp only [BitVec.toNat_append, BitVec.toNat_ofNat, hmMod]
+          rw [← Nat.shiftLeft_add_eq_or_of_lt (by omega)]
+          norm_num [Nat.shiftLeft_eq]
+          omega
+        unfold Float.Model.UnpackedFloat.unpack
+        cases s <;>
+        simp [Float.Model.UnpackedFloat.unpackSign_packComponents,
+          Float.Model.UnpackedFloat.Sign.ofBitVec,
+          Float.Model.UnpackedFloat.Sign.toBitVec,
+          modelSignOfBool, boolOfModelSign, standardFloatOfUnpacked,
+          Float.Model.Format.exponentBias,
+          ← BitVec.toNat_inj,
+          BitVec.toNat_ofNat, hbiasedMod',
+          hbiasedPos.ne', hbiasedLt.ne, hmantissa,
+          Int.toNat_of_nonneg (by omega : 0 ≤ e + 150)]
+      · have hnormal' :
+            ¬m.log2 + 1 = Float.Model.Format.binary32.mantissaBits := by
+          simpa [Float.Model.Format.mantissaBits] using hnormal
+        rw [ite_eq_right hnormal']
+        have hlogLt : m.log2 < 23 := by
+          have : m.log2 < 24 := (Nat.log2_lt (Nat.ne_of_gt hm)).2 hrange.1
+          omega
+        have hmLt : m < 2 ^ 23 :=
+          (Nat.log2_lt (Nat.ne_of_gt hm)).1 hlogLt
+        have hzdigits : FloatSpec.Core.Digits.Zdigits 2 (m : Int) ≤ 23 := by
+          have htrip := FloatSpec.Core.Digits.Zdigits_le_Zpower
+            (beta := 2) (x := (m : Int)) (e := 23) (by decide)
+          simp only [PostCond.noThrow, pure] at htrip
+          apply htrip
+          constructor
+          · norm_num
+          · norm_num
+            exact_mod_cast hmLt
+        have hcanon := canonical_mantissa_of_specFloat_bounded hx'.2
+        have heq :
+            e = max (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e - 24) (-149) := by
+          simpa [canonical_mantissa, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+            using eq_of_beq hcanon
+        have heMin : e = -149 := by omega
+        have hmModSmall : m % 8388608 = m := by
+          exact Nat.mod_eq_of_lt (by norm_num at hmLt ⊢; exact hmLt)
+        unfold Float.Model.UnpackedFloat.unpack
+        cases s <;>
+        simp [Float.Model.UnpackedFloat.unpackSign_packComponents,
+          Float.Model.UnpackedFloat.Sign.ofBitVec,
+          Float.Model.UnpackedFloat.Sign.toBitVec,
+          modelSignOfBool, boolOfModelSign, standardFloatOfUnpacked,
+          Float.Model.Format.exponentBias,
+          ← BitVec.toNat_inj,
+          BitVec.toNat_ofNat, hmModSmall, Nat.ne_of_gt hm, heMin]
+
+theorem unpack_model64OfStandardFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    (model64OfStandardFloat x).unpack = unpackedOfStandardFloat x := by
+  rw [← unpackedOfStandardFloat_standardFloatOfUnpacked
+    (model64OfStandardFloat x).unpack]
+  change unpackedOfStandardFloat
+    (standardFloatOfModel64 (model64OfStandardFloat x)) = unpackedOfStandardFloat x
+  rw [standardFloatOfModel64_model64OfStandardFloat x hx]
+
+theorem unpack_model32OfStandardFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    (model32OfStandardFloat x).unpack = unpackedOfStandardFloat x := by
+  rw [← unpackedOfStandardFloat_standardFloatOfUnpacked
+    (model32OfStandardFloat x).unpack]
+  change unpackedOfStandardFloat
+    (standardFloatOfModel32 (model32OfStandardFloat x)) = unpackedOfStandardFloat x
+  rw [standardFloatOfModel32_model32OfStandardFloat x hx]
 
 @[simp] theorem float32OfBinary_toModel (x : _root_.binary32) :
     (float32OfBinary x).toModel = model32OfBinary x := rfl

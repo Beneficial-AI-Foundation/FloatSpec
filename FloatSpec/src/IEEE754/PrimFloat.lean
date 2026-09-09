@@ -1389,12 +1389,36 @@ def toFloat (x : FaithfulPrimFloat.PrimitiveFloat) : Float :=
 def ofModel (x : Float.Model) : FaithfulPrimFloat.PrimitiveFloat :=
   SF2Prim (FloatSpec.IEEE754.Native.standardFloatOfModel64 x)
 
+@[simp] theorem prim2SF_ofModel (x : Float.Model) :
+    Prim2SF (ofModel x) = FloatSpec.IEEE754.Native.standardFloatOfModel64 x := by
+  simp [Prim2SF, ofModel, SF2Prim,
+    FloatSpec.IEEE754.Native.validStandardFloatOfModel64]
+
 /-- Decode a native Lean float through its logical model. -/
 def ofFloat (x : Float) : FaithfulPrimFloat.PrimitiveFloat :=
   ofModel x.toModel
 
 @[simp] theorem toFloat_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
     (toFloat x).toModel = toModel x := rfl
+
+@[simp] theorem toModel_ofModel (x : Float.Model) :
+    toModel (ofModel x) = x := by
+  rw [toModel,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  change FloatSpec.IEEE754.Native.model64OfStandardFloat
+    (B2SF (Prim2B (ofModel x))) = x
+  rw [B2SF_Prim2B, prim2SF_ofModel,
+    FloatSpec.IEEE754.Native.model64OfStandardFloat_standardFloatOfModel64]
+
+@[simp] theorem ofModel_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
+    ofModel (toModel x) = x := by
+  apply primitiveFloat_ext
+  rw [prim2SF_ofModel, toModel,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  change FloatSpec.IEEE754.Native.standardFloatOfModel64
+    (FloatSpec.IEEE754.Native.model64OfStandardFloat (B2SF (Prim2B x))) = Prim2SF x
+  rw [FloatSpec.IEEE754.Native.standardFloatOfModel64_model64OfStandardFloat
+    (B2SF (Prim2B x)) (B2SF_valid (Prim2B x)), B2SF_Prim2B]
 
 end PrimitiveFloat
 

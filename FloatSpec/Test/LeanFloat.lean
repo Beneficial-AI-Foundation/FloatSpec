@@ -68,3 +68,24 @@ example :
     (PrimitiveFloat.toModel
       (PrimitiveFloat.ofModel (Float.Model.ofBits 4607182418800017408))).toBits =
       4607182418800017408 := by native_decide
+
+example (x : Float.Model) :
+    PrimitiveFloat.toModel (PrimitiveFloat.ofModel x) = x := by simp
+
+example (x : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.ofModel (PrimitiveFloat.toModel x) = x := by simp
+
+example (x : Float.Model) :
+    validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
+      (standardFloatOfModel64 x) = true :=
+  FloatSpec.IEEE754.Native.validStandardFloatOfModel64 x
+
+example (x : Float32.Model) :
+    validBinarySingleNaNStandardFloat (prec := 24) (emax := 128)
+      (standardFloatOfModel32 x) = true :=
+  FloatSpec.IEEE754.Native.validStandardFloatOfModel32 x
+
+example (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    standardFloatOfModel32 (model32OfStandardFloat x) = x :=
+  FloatSpec.IEEE754.Native.standardFloatOfModel32_model32OfStandardFloat x hx

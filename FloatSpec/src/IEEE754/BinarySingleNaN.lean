@@ -8485,6 +8485,22 @@ def model64OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 53 1024) : Float.Mod
 def model32OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 24 128) : Float32.Model :=
   Float32.Model.pack (unpackedOfBinarySingleNaNFloat x)
 
+@[simp] theorem model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat
+    (x : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat x =
+      model64OfStandardFloat (binarySingleNaNFloatToStandardFloat x) := by
+  cases x <;> simp_all [model64OfBinarySingleNaNFloat, model64OfStandardFloat,
+    unpackedOfBinarySingleNaNFloat, unpackedOfStandardFloat,
+    binarySingleNaNFloatToStandardFloat]
+
+@[simp] theorem model32OfBinarySingleNaNFloat_eq_model32OfStandardFloat
+    (x : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat x =
+      model32OfStandardFloat (binarySingleNaNFloatToStandardFloat x) := by
+  cases x <;> simp_all [model32OfBinarySingleNaNFloat, model32OfStandardFloat,
+    unpackedOfBinarySingleNaNFloat, unpackedOfStandardFloat,
+    binarySingleNaNFloatToStandardFloat]
+
 end FloatSpec.IEEE754.Native
 
 /-! Source-qualified facade for declarations whose unqualified Coq names
